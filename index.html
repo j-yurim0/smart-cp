@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스마트 컷팅 플랜 (Smart CP) - Ver 11.1 (Stock Deduct in Result)</title>
+    <title>스마트 컷팅 플랜 (Smart CP) - Ver 11.3 (Marking Duplicate Fix)</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -368,7 +368,7 @@
                 <div id="sidebar" className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col fixed left-0 top-0 z-30 print:hidden">
                     <div className="p-6 border-b">
                         <h1 className="text-xl font-bold flex items-center gap-2 text-blue-700"><Calculator className="text-blue-600" /> Smart CP</h1>
-                        <p className="text-xs text-gray-400 mt-1">Ver 11.1 (Stock Deduct in Result)</p>
+                        <p className="text-xs text-gray-400 mt-1">Ver 11.3 (Marking Duplicate Fix)</p>
                     </div>
                     <div className="p-4 space-y-4 flex-1 overflow-y-auto">
                         <div className="space-y-2">
@@ -410,7 +410,6 @@
 
         // --- Manual CP View ---
         const ManualCPView = ({ dongs, currentDong, setCurrentDong, addDong, deleteDong, renameDong, projectInfo, manualData, setManualData, parsedItems, onConvert, isNoDongMode }) => {
-            // (Previous implementation - no changes needed)
             const rows = manualData[currentDong] || [];
             const [hideEmpty, setHideEmpty] = useState(false);
             const updateRows = (newRows) => { setManualData(prev => ({ ...prev, [currentDong]: newRows })); };
@@ -708,14 +707,53 @@
             const deleteDong = (targetDong) => { if (dongs.length <= 1) { alert("최소 하나의 동은 있어야 합니다."); return; } if (confirm(`'${targetDong}'을 삭제하시겠습니까?`)) { const newDongs = dongs.filter(d => d !== targetDong); setDongs(newDongs); if (currentDong === targetDong) setCurrentDong(newDongs[0]); setDongData(prev => { const n = { ...prev }; delete n[targetDong]; return n; }); setResultsByDong(prev => { const n = { ...prev }; delete n[targetDong]; return n; }); setManualData(prev => { const n = { ...prev }; delete n[targetDong]; return n; }); } };
             const handlePaste = (e) => { e.preventDefault(); const text = e.clipboardData.getData('text'); const rows = text.trim().split('\n').map(row => row.split('\t')); updateCurrentData({ rawInput: text, gridData: rows }); };
 
-            // --- Google Sheets Logic ---
+            // --- Google Sheets Logic (Auto Login Added) ---
             const [tokenClient, setTokenClient] = useState(null);
             const [isGapiReady, setIsGapiReady] = useState(false);
             const [isLoggedIn, setIsLoggedIn] = useState(false);
 
             useEffect(() => {
-                const initGapi = () => { gapi.load('client', async () => { await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] }); setIsGapiReady(true); }); };
-                const initGis = () => { const client = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPES, callback: (tokenResponse) => { if (tokenResponse && tokenResponse.access_token) { setIsLoggedIn(true); } } }); setTokenClient(client); };
+                const initGapi = () => { 
+                    gapi.load('client', async () => { 
+                        await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] }); 
+                        setIsGapiReady(true);
+                        
+                        // Auto-login check
+                        const stored = localStorage.getItem('gapi_token');
+                        if (stored) {
+                            try {
+                                const { token, expiry } = JSON.parse(stored);
+                                if (Date.now() < expiry) {
+                                    gapi.client.setToken(token);
+                                    setIsLoggedIn(true);
+                                    console.log('Auto-logged in via stored token');
+                                } else {
+                                    localStorage.removeItem('gapi_token'); // Clean up expired
+                                }
+                            } catch (e) {
+                                console.error('Error parsing stored token', e);
+                            }
+                        }
+                    }); 
+                };
+                const initGis = () => { 
+                    const client = google.accounts.oauth2.initTokenClient({ 
+                        client_id: CLIENT_ID, 
+                        scope: SCOPES, 
+                        callback: (tokenResponse) => { 
+                            if (tokenResponse && tokenResponse.access_token) { 
+                                // Save token with expiry (approx 1 hour)
+                                const expiryTime = Date.now() + (tokenResponse.expires_in * 1000);
+                                localStorage.setItem('gapi_token', JSON.stringify({
+                                    token: tokenResponse,
+                                    expiry: expiryTime
+                                }));
+                                setIsLoggedIn(true); 
+                            } 
+                        } 
+                    }); 
+                    setTokenClient(client); 
+                };
                 if (window.gapi) initGapi(); if (window.google) initGis();
             }, []);
 
@@ -745,7 +783,7 @@
             }
 
             const handleUpdateStock = async (targetScope, selectedMode) => {
-                if (!tokenClient) { alert("구글 API가 초기화되지 않았습니다."); return; }
+                if (!isLoggedIn) { alert("구글 로그인이 필요합니다."); return; }
                 // Calculate total used qty per spec
                 const usedMap = {}; 
                 const targets = targetScope === 'all' ? dongs : [currentDong];
@@ -800,18 +838,31 @@
                 } catch (error) { console.error("Update Error:", error); alert("재고 차감(저장) 중 오류가 발생했습니다: " + error.message); }
             };
 
-            // ... (Algorithmic functions: solvePatternBased, calculatePlanScore, runAdvancedOptimization remain UNTOUCHED) ...
+            // *** OPTIMIZATION ENGINE (Modified to fix Marking Duplicate Bug) ***
             const solvePatternBased = (items, availableStocks, mode, strategy = 'mixed', randomize = false, stockLimits = {}) => {
-                let inventory = {}; items.forEach(item => { if (!inventory[item.marking]) { inventory[item.marking] = { qty: item.qty, length: item.length, specKey: item.specKey, t: item.t, w: item.w, h: item.h, marking: item.marking, initQty: item.qty }; } });
-                let markings = Object.keys(inventory); if (randomize) { markings.sort(() => Math.random() - 0.5); }
+                let inventory = {}; 
+                // BUG FIX: Changed key from 'item.marking' to 'item.id' (unique per row)
+                // This prevents items with same marking but different specs from overwriting each other.
+                items.forEach(item => { 
+                    const itemKey = item.id; // Unique Key
+                    if (!inventory[itemKey]) { 
+                        inventory[itemKey] = { qty: item.qty, length: item.length, specKey: item.specKey, t: item.t, w: item.w, h: item.h, marking: item.marking, initQty: item.qty, id: item.id }; 
+                    } 
+                });
+                
+                let markings = Object.keys(inventory); // 'markings' is now list of unique IDs
+                if (randomize) { markings.sort(() => Math.random() - 0.5); }
                 let finalPlan = []; let currentStockLimits = { ...stockLimits };
+                
                 while (markings.some(m => inventory[m].qty > 0)) {
                     let bestPattern = null; let bestScore = -Infinity;
                     for (let stockLen of availableStocks) {
                         if (currentStockLimits[stockLen] !== undefined && currentStockLimits[stockLen] <= 0) continue;
                         let currentPattern = { parts: [], remainder: stockLen, tempCounts: {}, stockLength: stockLen, totalPartCount: 0, shortPartCount: 0, itemsUnder1000Count: 0 };
+                        // Filter candidates by remaining length
                         let candidateMarkings = markings.filter(m => inventory[m].qty > 0 && inventory[m].length <= currentPattern.remainder - 150);
                         if (candidateMarkings.length === 0) continue;
+                        
                         if (mode === 'min_rows' && strategy === 'balanced') {
                             let loop = true;
                             while (loop && currentPattern.remainder >= 150) {
@@ -820,7 +871,7 @@
                                     const item = inventory[mKey];
                                     let taken = currentPattern.tempCounts[mKey] || 0;
                                     if (item.qty > taken && item.length <= currentPattern.remainder) {
-                                        currentPattern.parts.push({ ...item, count: 1 });
+                                        currentPattern.parts.push({ ...item, count: 1 }); // Use item spread to keep ID/Marking correct
                                         currentPattern.remainder -= item.length;
                                         currentPattern.tempCounts[mKey] = taken + 1;
                                         currentPattern.totalPartCount++;
@@ -829,9 +880,11 @@
                                     }
                                 }
                             }
+                            // Consolidation for display
                             const consolidatedParts = [];
                             currentPattern.parts.forEach(p => {
-                                const existing = consolidatedParts.find(cp => cp.marking === p.marking);
+                                // Consolidate based on ID (which implies unique row)
+                                const existing = consolidatedParts.find(cp => cp.id === p.id);
                                 if (existing) existing.count++;
                                 else consolidatedParts.push({ ...p, count: 1 });
                             });
@@ -854,7 +907,9 @@
                                 }
                             }
                         }
+                        
                         if (currentPattern.remainder < 150) continue;
+                        
                         let score = 0;
                         if (mode === 'min_rows') {
                             if (currentPattern.remainder >= 150 && currentPattern.remainder <= 650) { score += 20000000; }
@@ -862,14 +917,15 @@
                             else score -= 999999999;
                             let maxRepeats = Infinity;
                             currentPattern.parts.forEach(p => {
-                                let available = inventory[p.marking].qty;
+                                // p.id corresponds to mKey
+                                let available = inventory[p.id].qty;
                                 maxRepeats = Math.min(maxRepeats, Math.floor(available / p.count));
                             });
                             if (currentStockLimits[stockLen] !== undefined) maxRepeats = Math.min(maxRepeats, currentStockLimits[stockLen]);
                             score += (maxRepeats * 1000000);
                             let itemsCleared = 0;
                             currentPattern.parts.forEach(p => {
-                                if (inventory[p.marking].qty === p.count * maxRepeats) itemsCleared++;
+                                if (inventory[p.id].qty === p.count * maxRepeats) itemsCleared++;
                             });
                             score += (itemsCleared * 500000);
                             if (currentPattern.shortPartCount > 1) score -= 5000000;
@@ -878,19 +934,31 @@
                         } else score -= currentPattern.remainder;
                         if (score > bestScore) { bestScore = score; bestPattern = currentPattern; }
                     }
+                    
                     if (bestPattern) {
-                        let repeatQty = Infinity; bestPattern.parts.forEach(p => { repeatQty = Math.min(repeatQty, Math.floor(inventory[p.marking].qty / p.count)); });
+                        let repeatQty = Infinity; 
+                        bestPattern.parts.forEach(p => { 
+                            repeatQty = Math.min(repeatQty, Math.floor(inventory[p.id].qty / p.count)); 
+                        });
+                        
                         if (currentStockLimits[bestPattern.stockLength] !== undefined) repeatQty = Math.min(repeatQty, currentStockLimits[bestPattern.stockLength]);
+                        
                         if (repeatQty > 0) {
                             if (currentStockLimits[bestPattern.stockLength] !== undefined) currentStockLimits[bestPattern.stockLength] -= repeatQty;
                             const finalParts = [];
-                            bestPattern.parts.forEach(p => { inventory[p.marking].qty -= (p.count * repeatQty); finalParts.push({ ...p, totalQty: p.count * repeatQty }); });
+                            bestPattern.parts.forEach(p => { 
+                                inventory[p.id].qty -= (p.count * repeatQty); 
+                                finalParts.push({ ...p, totalQty: p.count * repeatQty }); 
+                            });
                             finalPlan.push({ stockLength: bestPattern.stockLength, parts: finalParts, remainder: bestPattern.remainder, qty: repeatQty });
                         } else break;
                     } else {
+                        // Fallback: take remaining items one by one
                         markings.forEach(m => {
                             if (inventory[m].qty > 0) {
-                                let item = inventory[m]; let selectedStock = availableStocks.find(s => s >= item.length + 150); if (!selectedStock) selectedStock = Math.max(...availableStocks);
+                                let item = inventory[m]; 
+                                let selectedStock = availableStocks.find(s => s >= item.length + 150); 
+                                if (!selectedStock) selectedStock = Math.max(...availableStocks);
                                 finalPlan.push({ stockLength: selectedStock, parts: [{ ...item, count: 1, totalQty: item.qty }], remainder: selectedStock - item.length, qty: item.qty });
                                 item.qty = 0;
                             }
