@@ -4,64 +4,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스마트 컷팅 플랜 (Smart CP) - Ver 11.9.1 (Final Stable)</title>
+    <title>스마트 컷팅 플랜 (Smart CP) - Ver 11.3.1 (Qty Comma Fix)</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
-        body { font-family: 'Noto Sans KR', sans-serif; }
-        @media print {
-            @page { size: A4 portrait; margin: 5mm; }
-            body { background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; zoom: 1; }
-            .print\:hidden { display: none !important; }
-            #sidebar, .tabs-container, .action-buttons { display: none !important; }
-            #main-content { margin-left: 0 !important; width: 100% !important; }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
         }
-        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
-        .input-cell { width: 100%; height: 100%; border: none; background: transparent; text-align: center; outline: none; }
-        .input-cell:focus { background-color: #e0f2fe; font-weight: bold; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 5mm;
+            }
+
+            body {
+                background: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                zoom: 1;
+            }
+
+            .print\:hidden {
+                display: none !important;
+            }
+
+            .print\:p-0 {
+                padding: 0 !important;
+            }
+
+            .print\:m-0 {
+                margin: 0 !important;
+            }
+
+            .print\:text-xs {
+                font-size: 10px !important;
+            }
+
+            .print\:w-full {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            table {
+                width: 100% !important;
+                border-collapse: collapse;
+                page-break-inside: auto;
+            }
+
+            th,
+            td {
+                border: 1px solid #9ca3af !important;
+                padding: 2px !important;
+                white-space: nowrap;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            .break-before-page {
+                page-break-before: always;
+            }
+
+            #sidebar,
+            .tabs-container,
+            .action-buttons,
+            .summary-stats-container,
+            .stats-table-wrapper {
+                display: none !important;
+            }
+
+            #main-content {
+                margin-left: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        .modal-fade-in {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .input-cell {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            outline: none;
+        }
+
+        .input-cell:focus {
+            background-color: #e0f2fe;
+            font-weight: bold;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
 <body class="bg-gray-50 text-gray-900">
     <div id="root"></div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        window.FirebaseSDK = { initializeApp, getAuth, signInAnonymously };
+        window.dispatchEvent(new Event('firebase-sdk-ready'));
+    </script>
+
     <script type="text/babel">
         const { useState, useEffect, useRef, memo, useCallback, useMemo } = React;
 
-        // ==========================================
-        // 🚨 [설정] 구글 API 정보
-        const SHEET_NAME = '시트1'; // 만약 에러가 난다면 'Sheet1'로 변경해보세요.
-        const CLIENT_ID = '791608320864-ro52gqaonn7ppkoib6due2m48sfv9969.apps.googleusercontent.com';
-        const API_KEY = 'AIzaSyBoOVQF_WEEiIZqFIA89ET2Rvt95CUjzWk';
-        const SPREADSHEET_ID = '1I0-XY4ZjhbjCBHEbZ36B8QSKb99CQk2aBHgBpBMGLWc';
-        const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
-        const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
-        // ==========================================
-
-        const SHEET_ROW_MAP = [
-            { row: 5, w: 50, h: 50, t: '2.1', l: 6000 },
-            { row: 7, w: 75, h: 75, t: '2.1', l: 6000 }, { row: 8, w: 75, h: 75, t: '2.1', l: 6600 }, { row: 9, w: 75, h: 75, t: '2.1', l: 7200 }, { row: 10, w: 75, h: 75, t: '2.1', l: 8000 },
-            { row: 12, w: 100, h: 50, t: '2.1', l: 5000 }, { row: 13, w: 100, h: 50, t: '2.1', l: 6000 }, { row: 14, w: 100, h: 50, t: '2.1', l: 6600 }, { row: 15, w: 100, h: 50, t: '2.1', l: 7200 }, { row: 16, w: 100, h: 50, t: '2.1', l: 8200 },
-            { row: 18, w: 100, h: 100, t: '2.1', l: 5000 }, { row: 19, w: 100, h: 100, t: '2.1', l: 6000 }, { row: 20, w: 100, h: 100, t: '2.1', l: 6600 }, { row: 21, w: 100, h: 100, t: '2.1', l: 7200 }, { row: 22, w: 100, h: 100, t: '2.1', l: 8000 },
-            { row: 24, w: 100, h: 100, t: '2.3', l: 5000 }, { row: 25, w: 100, h: 100, t: '2.3', l: 6000 }, { row: 26, w: 100, h: 100, t: '2.3', l: 7200 }, { row: 27, w: 100, h: 100, t: '2.3', l: 8000 },
-            { row: 29, w: 100, h: 100, t: '3.0', l: 5000 }, { row: 30, w: 100, h: 100, t: '3.0', l: 6000 }, { row: 31, w: 100, h: 100, t: '3.0', l: 7200 }, { row: 32, w: 100, h: 100, t: '3.0', l: 8000 },
-            { row: 34, w: 100, h: 100, t: '3.2', l: 6000 }, { row: 35, w: 100, h: 100, t: '3.2', l: 6200 }, { row: 36, w: 100, h: 100, t: '3.2', l: 7200 }, { row: 37, w: 100, h: 100, t: '3.2', l: 8000 }
-        ];
-
         // --- Icons ---
-        const IconWrapper = ({ children, size = 20, className = "" }) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>);
+        const IconWrapper = ({ children, size = 20, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
         const Trash2 = (props) => <IconWrapper {...props}><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></IconWrapper>;
         const Plus = (props) => <IconWrapper {...props}><path d="M5 12h14" /><path d="M12 5v14" /></IconWrapper>;
         const Calculator = (props) => <IconWrapper {...props}><rect width="16" height="20" x="4" y="2" rx="2" /><line x1="8" x2="16" y1="6" y2="6" /><line x1="16" x2="16" y1="14" y2="18" /><path d="M16 10h.01" /><path d="M12 10h.01" /><path d="M8 10h.01" /><path d="M12 14h.01" /><path d="M8 14h.01" /><path d="M12 18h.01" /><path d="M8 18h.01" /></IconWrapper>;
@@ -79,117 +201,80 @@
         const FilePdf = (props) => <IconWrapper {...props}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><path d="M9 15h3a1.5 1.5 0 0 0 0-3H9v4" /><path d="M5 12v4" /><path d="M5 12h2" /><path d="M17 12h-3v4" /><path d="M17 14h-2" /></IconWrapper>;
         const Cloud = (props) => <IconWrapper {...props}><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></IconWrapper>;
 
-        // --- Constants & Data ---
-        const STANDARD_STOCKS = { "default": [6000, 6600, 7200, 8000], "100x100": { "2.1": [6000, 6600, 7200, 8000], "2.3": [6000, 6600, 7200, 8000], "3.0": [6000, 6200, 7200, 8000], "3.2": [6000, 6200, 7200, 8000] }, "75x75": { "2.1": [6000, 6600, 7200, 8000], "2.3": [6000, 6600, 7200, 8000], "3.0": [6000, 6200, 7200, 8000], "3.2": [6000, 6200, 7200, 8000] }, "100x50": { "2.1": [6000, 6600, 7200, 8200], "2.3": [6000, 6600, 7200, 8200], "3.0": [6000, 6600, 7200, 8200], "3.2": [6000, 6600, 7200, 8200] }, "50x50": { "2.1": [6000], "2.3": [6000], "3.0": [6000], "3.2": [6000] } };
-        const UNIT_WEIGHT_DATA = { "100-100-3.2": 9.52, "100-100-3.0": 8.96, "100-100-2.3": 6.95, "100-100-2.1": 6.37, "100-50-2.1": 4.72, "75-75-2.1": 4.72, "50-50-2.1": 3.07 };
-        
-        const getUnitWeight = (w, h, t) => { 
-            const dims = [parseInt(w), parseInt(h)].sort((a, b) => b - a); 
-            const key = `${dims[0]}-${dims[1]}-${t}`; 
-            return UNIT_WEIGHT_DATA[key] || 0; 
-        };
-        
-        // 🚨 흰 화면 방지 (빈 칸 데이터 안전하게 파싱)
-        const parseItemsFromGrid = (gridData, colMapping, defaultSpec, defaultThickness) => { 
-            if (!gridData || !colMapping) return [];
-            
-            const lenIdx = Object.keys(colMapping).find(k => colMapping[k] === 'length'); 
-            const qtyIdx = Object.keys(colMapping).find(k => colMapping[k] === 'qty'); 
-            
-            if (lenIdx === undefined || qtyIdx === undefined) return []; 
-            
-            const wIdx = Object.keys(colMapping).find(k => colMapping[k] === 'width'); 
-            const hIdx = Object.keys(colMapping).find(k => colMapping[k] === 'height'); 
-            const tIdx = Object.keys(colMapping).find(k => colMapping[k] === 'thickness'); 
-            const markIdx = Object.keys(colMapping).find(k => colMapping[k] === 'marking'); 
-            
-            let items = []; 
-            let rowCounter = 0; 
-            
-            gridData.forEach((row) => { 
-                if (!row) return;
-                let rawLenStr = row[lenIdx] !== undefined ? String(row[lenIdx]) : '';
-                let rawQtyStr = row[qtyIdx] !== undefined ? String(row[qtyIdx]) : '';
-                
-                let rawLen = rawLenStr.trim().replace(/,/g, ''); 
-                let rawQty = rawQtyStr.trim().replace(/폰/g, '').replace(/,/g, ''); 
-                if (!rawLen || !rawQty) return; 
-                
-                let length = parseFloat(rawLen); 
-                const qty = parseInt(rawQty, 10); 
-                if (isNaN(length) || isNaN(qty) || qty <= 0) return; 
-                if (length < 20) length = Math.round(length * 1000); else length = Math.round(length); 
-                
-                let w = wIdx !== undefined && row[wIdx] !== undefined ? String(row[wIdx]).trim().replace(/[^0-9.]/g, '') : ''; 
-                let h = hIdx !== undefined && row[hIdx] !== undefined ? String(row[hIdx]).trim().replace(/[^0-9.]/g, '') : ''; 
-                let t = tIdx !== undefined && row[tIdx] !== undefined ? String(row[tIdx]).trim().replace(/[^0-9.]/g, '') : ''; 
-                let marking = markIdx !== undefined && row[markIdx] !== undefined ? String(row[markIdx]).trim() : ''; 
-                
-                if (!w) w = defaultSpec.split('*')[0] || '100'; 
-                if (!h) h = defaultSpec.split('*')[1] || '100'; 
-                if (!t) t = defaultThickness; 
-                
-                const dims = [parseInt(w), parseInt(h)].sort((a, b) => b - a); 
-                const specKey = `${dims[0]}*${dims[1]} ${t}T`; 
-                items.push({ id: rowCounter++, length, qty, marking, specKey, w: dims[0], h: dims[1], t: t }); 
-            }); 
-            return items; 
+        // --- Constants ---
+        const UNIT_WEIGHT_DATA = {
+            "100-100-3.2": 9.52, "100-100-3.0": 8.96, "100-100-2.3": 6.95, "100-100-2.1": 6.37,
+            "100-50-2.1": 4.72, "75-75-2.1": 4.72, "50-50-2.1": 3.07
         };
 
-        // --- Components ---
-        const ModeSelector = ({ dongs, selectedModes, onModeChange }) => (
-            <div className="max-h-60 overflow-y-auto border rounded p-2 bg-gray-50">
-                <table className="w-full text-xs">
-                    <thead><tr><th className="text-left p-1">동 이름</th><th className="text-left p-1">버전 선택</th></tr></thead>
-                    <tbody>
-                        {dongs.map(dong => (
-                            <tr key={dong} className="border-b last:border-0">
-                                <td className="p-2 font-bold">{dong}</td>
-                                <td className="p-1">
-                                    <select className="w-full p-1 border rounded" value={selectedModes[dong] || 'min_rows'} onChange={(e) => onModeChange(dong, e.target.value)}>
-                                        <option value="min_rows">작업 편의</option>
-                                        <option value="min_loss">LOSS 최소화</option>
-                                        <option value="manual_result">수동 결과</option>
-                                    </select>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        );
-
-        const CopyResultModal = ({ isOpen, onClose, dongs, onConfirm }) => {
-            if (!isOpen) return null;
-            const [selectedDongs, setSelectedDongs] = useState(dongs.reduce((acc, d) => ({...acc, [d]: true}), {}));
-            const toggleDong = (d) => setSelectedDongs(prev => ({...prev, [d]: !prev[d]}));
-            const toggleAll = () => { const all = Object.values(selectedDongs).every(v => v); const n = {}; dongs.forEach(d => n[d] = !all); setSelectedDongs(n); };
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="bg-white rounded-xl shadow-2xl p-6 w-80 modal-fade-in relative">
-                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20} /></button>
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Copy className="text-blue-600" /> 복사할 동 선택</h3>
-                        <div className="space-y-2 mb-6 max-h-60 overflow-y-auto custom-scrollbar">
-                            <div className="flex items-center gap-2 p-2 bg-gray-100 rounded font-bold cursor-pointer" onClick={toggleAll}><input type="checkbox" checked={Object.values(selectedDongs).every(v => v)} readOnly /> 전체 선택</div>
-                            {dongs.map(dong => (<div key={dong} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer" onClick={() => toggleDong(dong)}><input type="checkbox" checked={selectedDongs[dong] || false} readOnly /> {dong}</div>))}
-                        </div>
-                        <button onClick={() => onConfirm(Object.keys(selectedDongs).filter(d => selectedDongs[d]))} className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700">선택한 동 복사하기</button>
-                    </div>
-                </div>
-            );
+        const STANDARD_STOCKS = {
+            "default": [6000, 6600, 7200, 8000],
+            "100x100": { "2.1": [6000, 6600, 7200, 8000], "2.3": [6000, 6600, 7200, 8000], "3.0": [6000, 6200, 7200, 8000], "3.2": [6000, 6200, 7200, 8000] },
+            "75x75": { "2.1": [6000, 6600, 7200, 8000], "2.3": [6000, 6600, 7200, 8000], "3.0": [6000, 6200, 7200, 8000], "3.2": [6000, 6200, 7200, 8000] },
+            "100x50": { "2.1": [6000, 6600, 7200, 8200], "2.3": [6000, 6600, 7200, 8200], "3.0": [6000, 6600, 7200, 8200], "3.2": [6000, 6600, 7200, 8200] },
+            "50x50": { "2.1": [6000], "2.3": [6000], "3.0": [6000], "3.2": [6000] }
         };
 
+        // --- Google Sheets Configuration ---
+        const CLIENT_ID = '791608320864-ro52gqaonn7ppkoib6due2m48sfv9969.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyBoOVQF_WEEiIZqFIA89ET2Rvt95CUjzWk';
+        const SPREADSHEET_ID = '1I0-XY4ZjhbjCBHEbZ36B8QSKb99CQk2aBHgBpBMGLWc';
+        const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
+        const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+
+        const SHEET_ROW_MAP = [
+            { row: 5, w: 50, h: 50, t: '2.1', l: 6000 },
+            { row: 7, w: 75, h: 75, t: '2.1', l: 6000 }, { row: 8, w: 75, h: 75, t: '2.1', l: 6600 }, { row: 9, w: 75, h: 75, t: '2.1', l: 7200 }, { row: 10, w: 75, h: 75, t: '2.1', l: 8000 },
+            { row: 12, w: 100, h: 50, t: '2.1', l: 5000 }, { row: 13, w: 100, h: 50, t: '2.1', l: 6000 }, { row: 14, w: 100, h: 50, t: '2.1', l: 6600 }, { row: 15, w: 100, h: 50, t: '2.1', l: 7200 }, { row: 16, w: 100, h: 50, t: '2.1', l: 8200 },
+            { row: 18, w: 100, h: 100, t: '2.1', l: 5000 }, { row: 19, w: 100, h: 100, t: '2.1', l: 6000 }, { row: 20, w: 100, h: 100, t: '2.1', l: 6600 }, { row: 21, w: 100, h: 100, t: '2.1', l: 7200 }, { row: 22, w: 100, h: 100, t: '2.1', l: 8000 },
+            { row: 24, w: 100, h: 100, t: '2.3', l: 5000 }, { row: 25, w: 100, h: 100, t: '2.3', l: 6000 }, { row: 26, w: 100, h: 100, t: '2.3', l: 7200 }, { row: 27, w: 100, h: 100, t: '2.3', l: 8000 },
+            { row: 29, w: 100, h: 100, t: '3.0', l: 5000 }, { row: 30, w: 100, h: 100, t: '3.0', l: 6000 }, { row: 31, w: 100, h: 100, t: '3.0', l: 7200 }, { row: 32, w: 100, h: 100, t: '3.0', l: 8000 },
+            { row: 34, w: 100, h: 100, t: '3.2', l: 6000 }, { row: 35, w: 100, h: 100, t: '3.2', l: 6200 }, { row: 36, w: 100, h: 100, t: '3.2', l: 7200 }, { row: 37, w: 100, h: 100, t: '3.2', l: 8000 }
+        ];
+
+        const getUnitWeight = (w, h, t) => {
+            const dims = [parseInt(w), parseInt(h)].sort((a, b) => b - a);
+            const key = `${dims[0]}-${dims[1]}-${t}`;
+            return UNIT_WEIGHT_DATA[key] || 0;
+        };
+
+        // --- Helper Function: Parse Items from Grid ---
+        const parseItemsFromGrid = (gridData, colMapping, defaultSpec, defaultThickness) => {
+            const lenIdx = Object.keys(colMapping).find(key => colMapping[key] === 'length');
+            const qtyIdx = Object.keys(colMapping).find(key => colMapping[key] === 'qty');
+            if (!lenIdx || !qtyIdx) return [];
+            const wIdx = Object.keys(colMapping).find(key => colMapping[key] === 'width');
+            const hIdx = Object.keys(colMapping).find(key => colMapping[key] === 'height');
+            const tIdx = Object.keys(colMapping).find(key => colMapping[key] === 'thickness');
+            const markIdx = Object.keys(colMapping).find(key => colMapping[key] === 'marking');
+            let items = []; let rowCounter = 0;
+            gridData.forEach((row) => {
+                let rawLen = row[lenIdx]?.trim().replace(/,/g, '');
+                let rawQty = row[qtyIdx]?.trim().replace(/폰/g, '').replace(/,/g, '');
+                if (!rawLen || !rawQty) return;
+                let length = parseFloat(rawLen);
+                const qty = parseInt(rawQty, 10);
+                if (isNaN(length) || isNaN(qty) || qty <= 0) return;
+                if (length < 20) length = Math.round(length * 1000); else length = Math.round(length);
+                let w = wIdx ? row[wIdx]?.trim().replace(/[^0-9.]/g, '') : '';
+                let h = hIdx ? row[hIdx]?.trim().replace(/[^0-9.]/g, '') : '';
+                let t = tIdx ? row[tIdx]?.trim().replace(/[^0-9.]/g, '') : '';
+                let marking = markIdx ? (row[markIdx]?.trim() || '') : '';
+                if (!w) w = defaultSpec.split('*')[0] || '100';
+                if (!h) h = defaultSpec.split('*')[1] || '100';
+                if (!t) t = defaultThickness;
+                const dims = [parseInt(w), parseInt(h)].sort((a, b) => b - a);
+                const specKey = `${dims[0]}*${dims[1]} ${t}T`;
+                items.push({ id: rowCounter++, length, qty, marking, specKey, w: dims[0], h: dims[1], t: t });
+            });
+            return items;
+        };
+
+        // --- Excel Export Modal ---
         const ExcelExportModal = ({ isOpen, onClose, onConfirm, dongs }) => {
             if (!isOpen) return null;
-            const [targetType, setTargetType] = useState('current'); 
-            const [selectedModes, setSelectedModes] = useState(dongs.reduce((acc, d) => ({ ...acc, [d]: 'min_rows' }), {})); 
-            const [singleMode, setSingleMode] = useState('min_rows');
-            
-            const handleConfirm = () => { 
-                if (targetType === 'current') onConfirm('current', { mode: singleMode }); 
-                else onConfirm('all', { modeMap: selectedModes }); 
-            };
-            
+            const [targetType, setTargetType] = useState('current');
+            const [modeType, setModeType] = useState('min_rows');
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                     <div className="bg-white rounded-xl shadow-2xl p-6 w-96 modal-fade-in relative">
@@ -199,68 +284,75 @@
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">저장 대상</label>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <button onClick={() => setTargetType('current')} className={`p-3 rounded-lg border text-sm font-bold transition ${targetType === 'current' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 hover:bg-gray-50'}`}>현재 동만</button>
-                                    <button onClick={() => setTargetType('all')} className={`p-3 rounded-lg border text-sm font-bold transition ${targetType === 'all' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 hover:bg-gray-50'}`}>전체 동</button>
+                                    <button onClick={() => setTargetType('current')} className={`p-3 rounded-lg border text-sm font-bold flex items-center justify-center gap-2 transition ${targetType === 'current' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 hover:bg-gray-50'}`}>현재 동만</button>
+                                    <button onClick={() => setTargetType('all')} className={`p-3 rounded-lg border text-sm font-bold flex items-center justify-center gap-2 transition ${targetType === 'all' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 hover:bg-gray-50'}`}>전체 동</button>
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">저장 버전 설정</label>
-                                {targetType === 'current' ? (
-                                    <select className="w-full p-2 border rounded" value={singleMode} onChange={(e) => setSingleMode(e.target.value)}>
-                                        <option value="min_rows">① 작업 편의</option><option value="min_loss">② LOSS 최소화</option><option value="manual_result">③ 수동 결과</option><option value="both">④ 자동 계산 (작업+LOSS)</option>
-                                    </select>
-                                ) : (
-                                    <ModeSelector dongs={dongs} selectedModes={selectedModes} onModeChange={(d, m) => setSelectedModes(p => ({ ...p, [d]: m }))} />
-                                )}
+                                <label className="block text-sm font-bold text-gray-700 mb-2">저장 버전</label>
+                                <div className="space-y-2">
+                                    <button onClick={() => setModeType('min_rows')} className={`w-full p-3 rounded-lg border text-left text-sm font-medium transition flex justify-between items-center ${modeType === 'min_rows' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                        <span>① 작업 편의 (Work Convenience)</span>{modeType === 'min_rows' && <Check size={16} />}
+                                    </button>
+                                    <button onClick={() => setModeType('min_loss')} className={`w-full p-3 rounded-lg border text-left text-sm font-medium transition flex justify-between items-center ${modeType === 'min_loss' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                        <span>② LOSS 최소화 (자재 절약)</span>{modeType === 'min_loss' && <Check size={16} />}
+                                    </button>
+                                    <button onClick={() => setModeType('manual_result')} className={`w-full p-3 rounded-lg border text-left text-sm font-medium transition flex justify-between items-center ${modeType === 'manual_result' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                        <span>③ 수동 작성 결과</span>{modeType === 'manual_result' && <Check size={16} />}
+                                    </button>
+                                    <button onClick={() => setModeType('both')} className={`w-full p-3 rounded-lg border text-left text-sm font-medium transition flex justify-between items-center ${modeType === 'both' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                        <span>④ 자동 계산 (작업+LOSS 둘 다)</span>{modeType === 'both' && <Check size={16} />}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <button onClick={handleConfirm} className="w-full mt-8 bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-700 transition flex justify-center items-center gap-2">다운로드 시작</button>
+                        <button onClick={() => onConfirm(targetType, modeType)} className="w-full mt-8 bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-700 transition flex justify-center items-center gap-2"><FileDown size={18} /> 다운로드 시작</button>
                     </div>
                 </div>
             );
         };
 
+        // --- Stock Deduct Modal ---
         const StockDeductModal = ({ isOpen, onClose, onConfirm, dongs, isLoggedIn, handleLogin }) => {
             if (!isOpen) return null;
-            const [targetType, setTargetType] = useState('current'); 
-            const [selectedModes, setSelectedModes] = useState(dongs.reduce((acc, d) => ({ ...acc, [d]: 'min_rows' }), {})); 
-            const [singleMode, setSingleMode] = useState('min_rows');
-            
-            const handleConfirm = () => { 
-                if (targetType === 'current') onConfirm('current', { mode: singleMode }); 
-                else onConfirm('all', { modeMap: selectedModes }); 
-            };
-            
+            const [targetType, setTargetType] = useState('current');
+            const [modeType, setModeType] = useState('min_rows');
+
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                     <div className="bg-white rounded-xl shadow-2xl p-6 w-96 modal-fade-in relative">
                         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20} /></button>
                         <h3 className="text-xl font-bold mb-6 flex items-center gap-2"><Cloud className="text-red-500" /> 재고 차감 (구글 시트)</h3>
+                        
                         {!isLoggedIn ? (
                             <div className="text-center py-6">
-                                <p className="text-sm text-gray-500 mb-4">로그인이 필요합니다.</p>
-                                <button onClick={handleLogin} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">구글 로그인</button>
+                                <p className="text-sm text-gray-500 mb-4">재고를 차감하려면 구글 로그인이 필요합니다.</p>
+                                <button onClick={handleLogin} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition">구글 로그인</button>
                             </div>
                         ) : (
                             <div className="space-y-6">
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">차감 대상</label>
                                     <div className="grid grid-cols-2 gap-2">
-                                        <button onClick={() => setTargetType('current')} className={`p-3 rounded-lg border text-sm font-bold transition ${targetType === 'current' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 hover:bg-gray-50'}`}>현재 동만</button>
-                                        <button onClick={() => setTargetType('all')} className={`p-3 rounded-lg border text-sm font-bold transition ${targetType === 'all' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 hover:bg-gray-50'}`}>전체 동</button>
+                                        <button onClick={() => setTargetType('current')} className={`p-3 rounded-lg border text-sm font-bold flex items-center justify-center gap-2 transition ${targetType === 'current' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 hover:bg-gray-50'}`}>현재 동만</button>
+                                        <button onClick={() => setTargetType('all')} className={`p-3 rounded-lg border text-sm font-bold flex items-center justify-center gap-2 transition ${targetType === 'all' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 hover:bg-gray-50'}`}>전체 동</button>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">차감 버전 설정</label>
-                                    {targetType === 'current' ? (
-                                        <select className="w-full p-2 border rounded" value={singleMode} onChange={(e) => setSingleMode(e.target.value)}>
-                                            <option value="min_rows">① 작업 편의</option><option value="min_loss">② LOSS 최소화</option><option value="manual_result">③ 수동 결과</option>
-                                        </select>
-                                    ) : (
-                                        <ModeSelector dongs={dongs} selectedModes={selectedModes} onModeChange={(d, m) => setSelectedModes(p => ({ ...p, [d]: m }))} />
-                                    )}
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">사용할 CP 버전</label>
+                                    <div className="space-y-2">
+                                        <button onClick={() => setModeType('min_rows')} className={`w-full p-3 rounded-lg border text-left text-sm font-medium transition flex justify-between items-center ${modeType === 'min_rows' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                            <span>① 작업 편의 (Work Convenience)</span>{modeType === 'min_rows' && <Check size={16} />}
+                                        </button>
+                                        <button onClick={() => setModeType('min_loss')} className={`w-full p-3 rounded-lg border text-left text-sm font-medium transition flex justify-between items-center ${modeType === 'min_loss' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                            <span>② LOSS 최소화 (자재 절약)</span>{modeType === 'min_loss' && <Check size={16} />}
+                                        </button>
+                                        <button onClick={() => setModeType('manual_result')} className={`w-full p-3 rounded-lg border text-left text-sm font-medium transition flex justify-between items-center ${modeType === 'manual_result' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                            <span>③ 수동 작성 결과</span>{modeType === 'manual_result' && <Check size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
-                                <button onClick={handleConfirm} className="w-full mt-8 bg-red-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-red-700 transition">차감 실행</button>
+                                <button onClick={() => onConfirm(targetType, modeType)} className="w-full mt-8 bg-red-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-red-700 transition flex justify-center items-center gap-2"><Cloud size={18} /> 차감 실행</button>
                             </div>
                         )}
                     </div>
@@ -269,25 +361,30 @@
         };
 
         const Sidebar = memo(({ viewMode, setViewMode, projectInfo, setProjectInfo, isNoDongMode, setIsNoDongMode }) => {
-            const handleTextChange = useCallback((e, f) => setProjectInfo(p => ({ ...p, [f]: e.target.value })), [setProjectInfo]);
-            const handleCheckChange = useCallback((e, f) => setProjectInfo(p => ({ ...p, [f]: e.target.checked })), [setProjectInfo]);
-            
+            const handleTextChange = useCallback((e, field) => setProjectInfo(prev => ({ ...prev, [field]: e.target.value })), [setProjectInfo]);
+            const handleCheckChange = useCallback((e, field) => setProjectInfo(prev => ({ ...prev, [field]: e.target.checked })), [setProjectInfo]);
+
             return (
-                <div id="sidebar" className="w-64 bg-white border-r h-screen flex flex-col fixed left-0 top-0 z-30 print:hidden">
-                    <div className="p-6 border-b"><h1 className="text-xl font-bold flex items-center gap-2 text-blue-700"><Calculator /> Smart CP</h1><p className="text-xs text-gray-400 mt-1">Ver 11.9.1 (Stable)</p></div>
+                <div id="sidebar" className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col fixed left-0 top-0 z-30 print:hidden">
+                    <div className="p-6 border-b">
+                        <h1 className="text-xl font-bold flex items-center gap-2 text-blue-700"><Calculator className="text-blue-600" /> Smart CP</h1>
+                        <p className="text-xs text-gray-400 mt-1">Ver 11.3.1 (Qty Comma Fix)</p>
+                    </div>
                     <div className="p-4 space-y-4 flex-1 overflow-y-auto">
-                        <div className="space-y-2"><label className="text-xs font-bold text-gray-500">프로젝트 정보</label>
-                            <input className="w-full p-2 border rounded text-sm bg-gray-50" placeholder="업체명" value={projectInfo.company} onChange={e => handleTextChange(e, 'company')} />
-                            <input className="w-full p-2 border rounded text-sm bg-gray-50" placeholder="현장명" value={projectInfo.site} onChange={e => handleTextChange(e, 'site')} />
-                            <input className="w-full p-2 border rounded text-sm bg-gray-50" placeholder="메모" value={projectInfo.note} onChange={e => handleTextChange(e, 'note')} />
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-500">프로젝트 정보</label>
+                            <input className="w-full p-2 border rounded text-sm bg-gray-50 focus:bg-white transition" placeholder="업체명" value={projectInfo.company} onChange={e => handleTextChange(e, 'company')} />
+                            <input className="w-full p-2 border rounded text-sm bg-gray-50 focus:bg-white transition" placeholder="현장명" value={projectInfo.site} onChange={e => handleTextChange(e, 'site')} />
+                            <input className="w-full p-2 border rounded text-sm bg-gray-50 focus:bg-white transition" placeholder="기타사항 (메모)" value={projectInfo.note} onChange={e => handleTextChange(e, 'note')} />
                             <div className="flex flex-col gap-1 mt-2">
                                 <label className="flex items-center gap-2 text-xs cursor-pointer"><input type="checkbox" checked={projectInfo.isIronBanding} onChange={e => handleCheckChange(e, 'isIronBanding')} /> 철밴딩 동표기</label>
-                                <label className="flex items-center gap-2 text-xs cursor-pointer font-bold text-blue-600"><input type="checkbox" checked={isNoDongMode} onChange={e => setIsNoDongMode(e.target.checked)} /> 동 표기 없음</label>
+                                <label className="flex items-center gap-2 text-xs cursor-pointer"><input type="checkbox" checked={projectInfo.isUnder1Ton} onChange={e => handleCheckChange(e, 'isUnder1Ton')} /> 1톤 미만 밴딩</label>
+                                <label className="flex items-center gap-2 text-xs cursor-pointer font-bold text-blue-600"><input type="checkbox" checked={isNoDongMode} onChange={e => setIsNoDongMode(e.target.checked)} /> 동 표기 없음 (단일 CP)</label>
                             </div>
                         </div>
                         <div className="space-y-1">
                             <button onClick={() => setViewMode('input')} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 ${viewMode === 'input' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}><FileSpreadsheet size={16} /> 데이터 입력</button>
-                            <button onClick={() => setViewMode('result')} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 ${viewMode === 'result' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}><Calculator size={16} /> CP 자동 결과</button>
+                            <button onClick={() => setViewMode('result')} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 ${viewMode === 'result' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}><Calculator size={16} /> CP 자동 계산</button>
                             <button onClick={() => setViewMode('manual')} className={`w-full text-left px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 ${viewMode === 'manual' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}><Edit3 size={16} /> CP 직접 작성</button>
                         </div>
                     </div>
@@ -311,101 +408,18 @@
             </div>
         );
 
-        // --- Manual CP View (Enhanced Nav) ---
-        const ManualCPView = ({ dongs, currentDong, setCurrentDong, addDong, deleteDong, renameDong, projectInfo, manualData, setManualData, parsedItems, openCopyModal, isNoDongMode }) => {
+        // --- Manual CP View ---
+        const ManualCPView = ({ dongs, currentDong, setCurrentDong, addDong, deleteDong, renameDong, projectInfo, manualData, setManualData, parsedItems, onConvert, isNoDongMode }) => {
             const rows = manualData[currentDong] || [];
             const [hideEmpty, setHideEmpty] = useState(false);
-            
             const updateRows = (newRows) => { setManualData(prev => ({ ...prev, [currentDong]: newRows })); };
             const addStockRow = () => { const lastRow = rows.length > 0 ? rows[rows.length - 1] : { t: '2.1', w: '100', h: '100', l: 6000, qty: 1 }; const newRow = { id: Date.now(), t: lastRow.t, w: lastRow.w, h: lastRow.h, l: lastRow.l, qty: 1, cuts: Array(8).fill().map(() => ({ l: '', count: '', marking: '' })) }; updateRows([...rows, newRow]); };
             const handleStockChange = (rIdx, field, val) => { const newRows = [...rows]; newRows[rIdx] = { ...newRows[rIdx], [field]: val }; updateRows(newRows); };
             const handleCutChange = (rIdx, cIdx, field, val) => { const newRows = [...rows]; const newCuts = [...newRows[rIdx].cuts]; newCuts[cIdx] = { ...newCuts[cIdx], [field]: val }; newRows[rIdx] = { ...newRows[rIdx], cuts: newCuts }; updateRows(newRows); };
-            const removeStockRow = (rIdx) => { if (confirm('삭제하시겠습니까?')) { const newRows = rows.filter((_, i) => i !== rIdx); updateRows(newRows); } };
-            const removeAllRows = () => { if (confirm('모든 데이터를 삭제하시겠습니까?')) { updateRows([]); } };
+            const removeStockRow = (rIdx) => { if (confirm('이 원본 행을 삭제하시겠습니까?')) { const newRows = rows.filter((_, i) => i !== rIdx); updateRows(newRows); } };
             const sortRowsByLength = () => { const newRows = [...rows].sort((a, b) => { if (a.t !== b.t) return parseFloat(b.t) - parseFloat(a.t); if (a.w !== b.w) return parseFloat(b.w) - parseFloat(a.w); if (a.h !== b.h) return parseFloat(b.h) - parseFloat(a.h); return b.l - a.l; }); updateRows(newRows); };
-            
-            // 🚨 엑셀 스타일 방향키 이동 (완벽 수정)
-            const handleKeyDown = (e, rIdx, type, cIdx, field) => {
-                if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
-                e.preventDefault(); 
-                let targetId = null;
-
-                if (e.key === 'ArrowRight') {
-                    if (type === 'stock') {
-                        const fields = ['t','w','h','l','qty'];
-                        const fIdx = fields.indexOf(field);
-                        if (fIdx < 4) targetId = `s-${rIdx}-${fields[fIdx+1]}`;
-                        else targetId = `c-${rIdx}-0-l`; // 수량 -> 첫번째 컷팅 길이
-                    } else {
-                        const fields = ['l', 'count', 'marking'];
-                        const fIdx = fields.indexOf(field);
-                        if (fIdx < 2) targetId = `c-${rIdx}-${cIdx}-${fields[fIdx+1]}`; // 옆칸 이동
-                        else if (cIdx < 7) targetId = `c-${rIdx}-${cIdx+1}-l`; // 마킹 -> 다음줄 길이
-                    }
-                } else if (e.key === 'ArrowLeft') {
-                    if (type === 'stock') {
-                        const fields = ['t','w','h','l','qty'];
-                        const fIdx = fields.indexOf(field);
-                        if (fIdx > 0) targetId = `s-${rIdx}-${fields[fIdx-1]}`;
-                    } else {
-                        const fields = ['l', 'count', 'marking'];
-                        const fIdx = fields.indexOf(field);
-                        if (fIdx > 0) targetId = `c-${rIdx}-${cIdx}-${fields[fIdx-1]}`; // 왼쪽 칸 이동
-                        else if (cIdx > 0) targetId = `c-${rIdx}-${cIdx-1}-marking`; // 이전줄 마킹
-                        else targetId = `s-${rIdx}-qty`; // 첫 컷팅 길이 -> 원본 수량
-                    }
-                } else if (e.key === 'ArrowDown') {
-                    if (type === 'stock') {
-                        targetId = `s-${Math.min(rows.length-1, rIdx+1)}-${field}`;
-                    } else {
-                        if (cIdx < 7) targetId = `c-${rIdx}-${cIdx+1}-${field}`;
-                        else if (rIdx < rows.length-1) targetId = `c-${rIdx+1}-0-${field}`;
-                    }
-                } else if (e.key === 'ArrowUp') {
-                     if (type === 'stock') {
-                        targetId = `s-${Math.max(0, rIdx-1)}-${field}`;
-                    } else {
-                        if (cIdx > 0) targetId = `c-${rIdx}-${cIdx-1}-${field}`;
-                        else if (rIdx > 0) targetId = `c-${rIdx-1}-7-${field}`;
-                    }
-                }
-
-                if (targetId) {
-                    const el = document.getElementById(targetId);
-                    if (el) el.focus();
-                }
-            };
-
-            const requiredItems = useMemo(() => {
-                const grouped = {};
-                (parsedItems || []).forEach(item => {
-                    const itemMarking = item.marking ? String(item.marking).trim() : '';
-                    const key = `${item.t}|${item.w}|${item.h}|${item.length}|${itemMarking}`;
-                    if (!grouped[key]) grouped[key] = { ...item, marking: itemMarking, required: 0, used: 0 };
-                    grouped[key].required += item.qty;
-                });
-                return Object.values(grouped).sort((a, b) => b.length - a.length);
-            }, [parsedItems]);
-
-            const remainingItems = useMemo(() => {
-                const statusMap = {};
-                requiredItems.forEach(item => { const key = `${item.t}|${item.w}|${item.h}|${item.length}|${item.marking}`; statusMap[key] = { ...item, used: 0, isExtra: false }; });
-                (rows || []).forEach(row => {
-                    if (Array.isArray(row.cuts)) {
-                        row.cuts.forEach(cut => {
-                            if (cut.l && cut.count) {
-                                const cutLen = parseFloat(cut.l);
-                                const totalCutCount = parseInt(cut.count) * parseInt(row.qty || 0);
-                                const cutMarking = cut.marking ? String(cut.marking).trim() : '';
-                                const key = `${row.t || ''}|${row.w || ''}|${row.h || ''}|${cutLen}|${cutMarking}`;
-                                if (statusMap[key]) { statusMap[key].used += totalCutCount; } 
-                                else { statusMap[key] = { t: row.t, w: row.w, h: row.h, length: cutLen, marking: cutMarking, required: 0, used: totalCutCount, isExtra: true }; }
-                            }
-                        });
-                    }
-                });
-                return Object.values(statusMap).sort((a, b) => { if(a.isExtra !== b.isExtra) return a.isExtra ? -1 : 1; return b.length - a.length; });
-            }, [requiredItems, rows]);
+            const requiredItems = useMemo(() => { const grouped = {}; (parsedItems || []).forEach(item => { const itemMarking = item.marking ? String(item.marking).trim() : ''; const key = `${item.t}|${item.w}|${item.h}|${item.length}|${itemMarking}`; if (!grouped[key]) grouped[key] = { ...item, marking: itemMarking, required: 0, used: 0 }; grouped[key].required += item.qty; }); return Object.values(grouped).sort((a, b) => b.length - a.length); }, [parsedItems]);
+            const remainingItems = useMemo(() => { const status = JSON.parse(JSON.stringify(requiredItems)); (rows || []).forEach(row => { if (Array.isArray(row.cuts)) { row.cuts.forEach(cut => { if (cut.l && cut.count) { const cutLen = parseFloat(cut.l); const totalCutCount = parseInt(cut.count) * parseInt(row.qty || 0); const cutMarking = cut.marking ? String(cut.marking).trim() : ''; const match = status.find(item => Math.abs(item.length - cutLen) < 0.1 && (item.marking || '') === cutMarking && item.t == row.t && item.w == row.w && item.h == row.h); if (match) { match.used += totalCutCount; } } }); } }); return status; }, [requiredItems, rows]);
 
             return (
                 <div className="animate-fade-in pb-20 flex gap-4 h-[calc(100vh-100px)]">
@@ -413,27 +427,40 @@
                         <div className="p-3 border-b bg-gray-50 flex justify-between items-center shrink-0">
                             <h2 className="font-bold flex items-center gap-2"><Edit3 size={18} className="text-blue-600" /> CP 직접 작성 {isNoDongMode ? '' : `(${currentDong})`}</h2>
                             <div className="flex gap-2">
-                                <button onClick={() => setHideEmpty(!hideEmpty)} className={`px-3 py-1.5 text-xs font-bold rounded flex items-center gap-1 border ${hideEmpty ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-gray-500 border-gray-300'}`}>{hideEmpty ? <EyeOff size={14} /> : <Eye size={14} />} 빈칸</button>
-                                <button onClick={sortRowsByLength} className="px-3 py-1.5 text-xs font-bold rounded bg-white border border-gray-300 text-gray-600 hover:bg-gray-50">길이 정렬</button>
-                                <button onClick={removeAllRows} className="px-3 py-1.5 text-xs font-bold rounded bg-red-100 border border-red-200 text-red-600 hover:bg-red-200">전체 삭제</button>
-                                <button onClick={openCopyModal} className="px-3 py-1.5 text-xs font-bold rounded bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1"><Copy size={14} /> 수정(결과 복사)</button>
+                                <button onClick={() => setHideEmpty(!hideEmpty)} className={`px-3 py-1.5 text-xs font-bold rounded flex items-center gap-1 border ${hideEmpty ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-gray-500 border-gray-300'}`}>{hideEmpty ? <EyeOff size={14} /> : <Eye size={14} />} 빈칸 {hideEmpty ? '보이기' : '숨기기'}</button>
+                                <button onClick={sortRowsByLength} className="px-3 py-1.5 text-xs font-bold rounded bg-white border border-gray-300 text-gray-600 hover:bg-gray-50">길이순 정렬</button>
+                                <button onClick={() => onConvert(rows)} className="px-3 py-1.5 text-xs font-bold rounded bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1"><Copy size={14} /> 결과 확인 및 엑셀 저장</button>
                             </div>
                         </div>
                         <div className="flex-1 overflow-auto custom-scrollbar bg-white p-4">
                             {!isNoDongMode && <DongTabs dongs={dongs} currentDong={currentDong} setCurrentDong={setCurrentDong} addDong={addDong} deleteDong={deleteDong} renameDong={renameDong} />}
                             <table className="w-full border-collapse text-xs text-center shadow-sm">
-                                <thead className="sticky top-0 z-10"><tr className="bg-cyan-100 h-8 border-y border-gray-300 text-gray-700 font-bold"><th className="border w-10">순번</th><th className="border w-12">두께</th><th className="border w-12">장변</th><th className="border w-12">단변</th><th className="border w-16">길이</th><th className="border w-12">수량</th><th className="border w-16 bg-blue-50">길이</th><th className="border w-12 bg-blue-50">컷팅수</th><th className="border w-12 bg-blue-50">수량</th><th className="border bg-blue-50">마킹</th><th className="border w-16">본당LOSS</th><th className="border w-20">총LOSS</th><th className="border w-12">비고</th></tr></thead>
+                                <thead className="sticky top-0 z-10">
+                                    <tr className="bg-cyan-100 h-8 border-y border-gray-300 text-gray-700 font-bold">
+                                        <th className="border w-10">순번</th>
+                                        <th className="border w-12">두께</th>
+                                        <th className="border w-12">장변</th>
+                                        <th className="border w-12">단변</th>
+                                        <th className="border w-16">길이</th>
+                                        <th className="border w-12">수량</th>
+                                        <th className="border w-16 bg-blue-50">길이</th>
+                                        <th className="border w-12 bg-blue-50">컷팅수</th>
+                                        <th className="border w-12 bg-blue-50">수량</th>
+                                        <th className="border bg-blue-50">마킹</th>
+                                        <th className="border w-16">본당LOSS</th>
+                                        <th className="border w-20">총LOSS</th>
+                                        <th className="border w-12">비고</th>
+                                    </tr>
+                                </thead>
                                 <tbody>
                                     {(rows || []).map((row, rIdx) => {
                                         const cuts = Array.isArray(row.cuts) ? row.cuts : [];
                                         const visibleCuts = hideEmpty ? cuts.filter(c => c.l && c.count) : cuts;
                                         const renderCuts = visibleCuts.length > 0 ? visibleCuts : (hideEmpty ? [] : cuts);
                                         const rowSpan = Math.max(1, renderCuts.length);
-                                        
-                                        const stockLength = parseFloat(row.l) || 0;
-                                        const usedLength = cuts.reduce((acc, c) => acc + ((parseFloat(c.l) || 0) * (parseFloat(c.count) || 0)), 0);
-                                        const lossPerBar = stockLength - usedLength;
-                                        
+                                        const usedLength = cuts.reduce((acc, c) => acc + (parseFloat(c.l || 0) * parseFloat(c.count || 0)), 0);
+                                        const lossPerBar = row.l - usedLength;
+                                        const totalRowLoss = lossPerBar * row.qty;
                                         return (
                                             <React.Fragment key={row.id || rIdx}>
                                                 {renderCuts.map((cut, cIdx) => {
@@ -441,52 +468,9 @@
                                                     const cutQty = (parseInt(cut.count) * parseInt(row.qty)) || '';
                                                     return (
                                                         <tr key={cIdx} className="border-b border-gray-200 hover:bg-gray-50 h-8">
-                                                            {isFirst && (
-                                                                <>
-                                                                    <td rowSpan={rowSpan} className="border bg-yellow-100 font-bold relative group">
-                                                                        {rIdx + 1}
-                                                                        <button onClick={() => removeStockRow(rIdx)} className="absolute left-0 top-0 text-red-400 opacity-0 group-hover:opacity-100 p-0.5"><Trash2 size={10} /></button>
-                                                                    </td>
-                                                                    <td rowSpan={rowSpan} className="border bg-yellow-50 p-0">
-                                                                        <input id={`s-${rIdx}-t`} className="input-cell bg-yellow-50" value={row.t || ''} onChange={e => handleStockChange(rIdx, 't', e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rIdx, 'stock', 0, 't')} />
-                                                                    </td>
-                                                                    <td rowSpan={rowSpan} className="border bg-yellow-50 p-0">
-                                                                        <input id={`s-${rIdx}-w`} className="input-cell bg-yellow-50" value={row.w || ''} onChange={e => handleStockChange(rIdx, 'w', e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rIdx, 'stock', 0, 'w')} />
-                                                                    </td>
-                                                                    <td rowSpan={rowSpan} className="border bg-yellow-50 p-0">
-                                                                        <input id={`s-${rIdx}-h`} className="input-cell bg-yellow-50" value={row.h || ''} onChange={e => handleStockChange(rIdx, 'h', e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rIdx, 'stock', 0, 'h')} />
-                                                                    </td>
-                                                                    <td rowSpan={rowSpan} className="border bg-yellow-50 p-0">
-                                                                        <input id={`s-${rIdx}-l`} type="number" className="input-cell bg-yellow-50 font-bold" value={row.l || ''} onChange={e => handleStockChange(rIdx, 'l', e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rIdx, 'stock', 0, 'l')} />
-                                                                    </td>
-                                                                    <td rowSpan={rowSpan} className="border bg-yellow-50 p-0">
-                                                                        <input id={`s-${rIdx}-qty`} type="number" className="input-cell bg-yellow-50" value={row.qty || ''} onChange={e => handleStockChange(rIdx, 'qty', e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rIdx, 'stock', 0, 'qty')} />
-                                                                    </td>
-                                                                </>
-                                                            )}
-                                                            <td className="border p-0">
-                                                                <input id={`c-${rIdx}-${cIdx}-l`} type="number" className="input-cell" value={cut.l || ''} onChange={e => handleCutChange(rIdx, cIdx, 'l', e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rIdx, 'cut', cIdx, 'l')} />
-                                                            </td>
-                                                            <td className="border p-0">
-                                                                <input id={`c-${rIdx}-${cIdx}-count`} type="number" className="input-cell" value={cut.count || ''} onChange={e => handleCutChange(rIdx, cIdx, 'count', e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rIdx, 'cut', cIdx, 'count')} />
-                                                            </td>
-                                                            <td className="border bg-gray-50 text-gray-500">
-                                                                {cutQty ? cutQty.toLocaleString() : ''}
-                                                            </td>
-                                                            <td className="border p-0">
-                                                                <input id={`c-${rIdx}-${cIdx}-marking`} className="input-cell text-left px-1" value={cut.marking || ''} onChange={e => handleCutChange(rIdx, cIdx, 'marking', e.target.value)} onKeyDown={(e)=>handleKeyDown(e, rIdx, 'cut', cIdx, 'marking')} />
-                                                            </td>
-                                                            {isFirst && (
-                                                                <>
-                                                                    <td rowSpan={rowSpan} className={`border font-bold ${lossPerBar >= 650 ? 'text-blue-600' : (lossPerBar < 150 ? 'text-red-500' : 'text-gray-700')}`}>
-                                                                        {isNaN(lossPerBar) ? '' : lossPerBar.toLocaleString()}
-                                                                    </td>
-                                                                    <td rowSpan={rowSpan} className="border text-gray-600">
-                                                                        {isNaN(lossPerBar) || !row.qty ? '' : (lossPerBar * row.qty).toLocaleString()}
-                                                                    </td>
-                                                                    <td rowSpan={rowSpan} className="border"></td>
-                                                                </>
-                                                            )}
+                                                            {isFirst && (<><td rowSpan={rowSpan} className="border bg-yellow-100 font-bold relative group">{rIdx + 1}<button onClick={() => removeStockRow(rIdx)} className="absolute left-0 top-0 text-red-400 opacity-0 group-hover:opacity-100 p-0.5"><Trash2 size={10} /></button></td><td rowSpan={rowSpan} className="border bg-yellow-50 p-0"><input className="input-cell bg-yellow-50" value={row.t} onChange={e => handleStockChange(rIdx, 't', e.target.value)} /></td><td rowSpan={rowSpan} className="border bg-yellow-50 p-0"><input className="input-cell bg-yellow-50" value={row.w} onChange={e => handleStockChange(rIdx, 'w', e.target.value)} /></td><td rowSpan={rowSpan} className="border bg-yellow-50 p-0"><input className="input-cell bg-yellow-50" value={row.h} onChange={e => handleStockChange(rIdx, 'h', e.target.value)} /></td><td rowSpan={rowSpan} className="border bg-yellow-50 p-0"><input type="number" className="input-cell bg-yellow-50 font-bold" value={row.l} onChange={e => handleStockChange(rIdx, 'l', e.target.value)} /></td><td rowSpan={rowSpan} className="border bg-yellow-50 p-0"><input type="number" className="input-cell bg-yellow-50" value={row.qty} onChange={e => handleStockChange(rIdx, 'qty', e.target.value)} /></td></>)}
+                                                            <td className="border p-0"><input type="number" className="input-cell" value={cut.l} onChange={e => handleCutChange(rIdx, cuts.indexOf(cut), 'l', e.target.value)} /></td><td className="border p-0"><input type="number" className="input-cell" value={cut.count} onChange={e => handleCutChange(rIdx, cuts.indexOf(cut), 'count', e.target.value)} /></td><td className="border bg-gray-50 text-gray-500">{cutQty ? cutQty.toLocaleString() : ''}</td><td className="border p-0"><input className="input-cell text-left px-1" value={cut.marking} onChange={e => handleCutChange(rIdx, cuts.indexOf(cut), 'marking', e.target.value)} /></td>
+                                                            {isFirst && (<><td rowSpan={rowSpan} className={`border font-bold ${lossPerBar >= 650 ? 'text-blue-600' : (lossPerBar < 150 ? 'text-red-500' : 'text-gray-700')}`}>{lossPerBar.toLocaleString()}</td><td rowSpan={rowSpan} className="border text-gray-600">{totalRowLoss.toLocaleString()}</td><td rowSpan={rowSpan} className="border"></td></>)}
                                                         </tr>
                                                     );
                                                 })}
@@ -501,16 +485,26 @@
                     </div>
                     <div className="w-80 flex flex-col gap-4">
                         <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden"><div className="p-2 bg-gray-800 text-white font-bold text-sm text-center">견적 물량 (필요 자재)</div><div className="flex-1 overflow-auto custom-scrollbar p-2"><table className="w-full text-xs text-center border-collapse"><thead className="sticky top-0 bg-white shadow-sm"><tr className="bg-gray-100 border-b"><th className="p-1">규격(T/W/H)</th><th className="p-1">길이</th><th className="p-1">수량</th><th className="p-1">마킹</th></tr></thead><tbody>{requiredItems.map((item, i) => (<tr key={i} className="border-b hover:bg-gray-50"><td className="p-1">{item.t}/{item.w}/{item.h}</td><td className="p-1 font-bold">{item.length}</td><td className="p-1">{item.required}</td><td className="p-1 text-left truncate max-w-[80px]" title={item.marking}>{item.marking}</td></tr>))}</tbody></table></div></div>
-                        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden"><div className="p-2 bg-blue-600 text-white font-bold text-sm text-center">남은 물량 (실시간)</div><div className="flex-1 overflow-auto custom-scrollbar p-2"><table className="w-full text-xs text-center border-collapse"><thead className="sticky top-0 bg-white shadow-sm"><tr className="bg-blue-50 border-b border-blue-200"><th className="p-1">규격(T/W/H)</th><th className="p-1">길이</th><th className="p-1">필요</th><th className="p-1">잔여</th><th className="p-1">마킹</th></tr></thead><tbody>{remainingItems.map((item, i) => { const remaining = item.required - item.used; const isDone = remaining <= 0; const isExtra = item.isExtra; return (<tr key={i} className={`border-b ${isExtra ? 'bg-orange-100 text-orange-800' : (isDone ? 'bg-gray-100 text-gray-400' : 'hover:bg-blue-50')}`}><td className="p-1">{item.t}/{item.w}/{item.h}</td><td className="p-1 font-bold">{item.length}</td><td className="p-1">{item.required}</td><td className={`p-1 font-bold ${remaining < 0 ? 'text-red-500' : (remaining === 0 ? 'text-green-500' : 'text-black')}`}>{remaining}</td><td className="p-1 text-left truncate max-w-[60px]" title={item.marking}>{item.marking}</td></tr>); })}</tbody></table></div></div>
+                        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden"><div className="p-2 bg-blue-600 text-white font-bold text-sm text-center">남은 물량 (실시간)</div><div className="flex-1 overflow-auto custom-scrollbar p-2"><table className="w-full text-xs text-center border-collapse"><thead className="sticky top-0 bg-white shadow-sm"><tr className="bg-blue-50 border-b border-blue-200"><th className="p-1">규격(T/W/H)</th><th className="p-1">길이</th><th className="p-1">필요</th><th className="p-1">잔여</th><th className="p-1">마킹</th></tr></thead><tbody>{remainingItems.map((item, i) => { const remaining = item.required - item.used; const isDone = remaining <= 0; return (<tr key={i} className={`border-b ${isDone ? 'bg-gray-100 text-gray-400' : 'hover:bg-blue-50'}`}><td className="p-1">{item.t}/{item.w}/{item.h}</td><td className="p-1 font-bold">{item.length}</td><td className="p-1">{item.required}</td><td className={`p-1 font-bold ${remaining < 0 ? 'text-red-500' : (remaining === 0 ? 'text-green-500' : 'text-black')}`}>{remaining}</td><td className="p-1 text-left truncate max-w-[60px]" title={item.marking}>{item.marking}</td></tr>); })}</tbody></table></div></div>
                     </div>
                 </div>
             );
         };
 
         // --- Input View ---
-        const InputView = ({ currentDong, dongs, setCurrentDong, addDong, deleteDong, renameDong, data, updateCurrentData, activeTab, setActiveTab, customStocks, setCustomStocks, processGridData, handlePaste, runAllDongs, globalSettings, isUserStockMode, setIsUserStockMode, userStockList, setUserStockList, setViewMode, isCalculating, isNoDongMode, handleFetchStock, isGapiReady, isLoggedIn, handleLogin, inputMode, setInputMode }) => {
+        const InputView = ({
+            currentDong, dongs, setCurrentDong, addDong, deleteDong, renameDong,
+            data, updateCurrentData, activeTab, setActiveTab, customStocks, setCustomStocks,
+            processGridData, handlePaste, runAllDongs, globalSettings,
+            isUserStockMode, setIsUserStockMode, userStockList, setUserStockList,
+            setViewMode, isCalculating, isNoDongMode,
+            handleFetchStock, isGapiReady, isLoggedIn, handleLogin
+        }) => {
+            const [inputMode, setInputMode] = useState('sales');
             const [newStd, setNewStd] = useState({ w: '100', h: '100', t: '2.1', length: 6000, qty: 10 });
             const [newRem, setNewRem] = useState({ w: '100', h: '100', t: '2.1', length: 0, qty: 1 });
+
+            useEffect(() => { if (inputMode === 'sales') { updateCurrentData({ colMapping: { 1: 'width', 2: 'height', 3: 'thickness', 4: 'length', 8: 'qty', 13: 'marking' } }); } else { updateCurrentData({ colMapping: { 2: 'width', 3: 'height', 4: 'thickness', 5: 'length', 7: 'qty', 8: 'marking' } }); } }, [inputMode]);
             const getSpecOptions = () => { const options = []; Object.keys(globalSettings).forEach(key => { if (Array.isArray(globalSettings[key])) { if (key !== "default") options.push({ label: key, value: key + "|2.1" }); } else { Object.keys(globalSettings[key]).forEach(subKey => { options.push({ label: `${key} ${subKey}T`, value: `${key}|${subKey}` }); }); } }); return options; };
             const getStandardLengthsForInput = (w, h, t) => { const dims = [parseInt(w), parseInt(h)].sort((a, b) => b - a); const specKey = `${dims[0]}x${dims[1]}`; const thickStr = String(t).trim(); const settings = globalSettings; if (settings[specKey]) { if (settings[specKey][thickStr]) return settings[specKey][thickStr]; if (thickStr === '2.3' && settings[specKey]['2.1']) return settings[specKey]['2.1']; if (settings[specKey]['all']) return settings[specKey]['all']; } return settings["default"] || []; };
             const handleCellChange = (rIdx, cIdx, val) => { const newData = [...data.gridData]; newData[rIdx][cIdx] = val; updateCurrentData({ gridData: newData }); };
@@ -532,19 +526,38 @@
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                         <div className="lg:col-span-1 space-y-4">
                             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                                <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2 text-sm"><Settings size={16} /> 입력 양식 선택 (전체 적용)</h3>
+                                <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2 text-sm"><Settings size={16} /> 입력 양식 선택</h3>
                                 <div className="flex bg-gray-100 p-1 rounded-lg">
                                     <button onClick={() => setInputMode('sales')} className={`flex-1 py-2 text-xs font-bold rounded ${inputMode === 'sales' ? 'bg-white shadow text-blue-600' : 'text-gray-500'}`}>영업 (기본)</button>
                                     <button onClick={() => setInputMode('design')} className={`flex-1 py-2 text-xs font-bold rounded ${inputMode === 'design' ? 'bg-white shadow text-blue-600' : 'text-gray-500'}`}>설계 (상세)</button>
                                 </div>
                             </div>
+
                             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                                 <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2 text-sm"><Cloud size={16} /> 구글 시트 재고 연동</h3>
-                                {isGapiReady ? (!isLoggedIn ? (<button onClick={handleLogin} className="w-full bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-200 transition mb-2">구글 로그인 (재고 연동)</button>) : (<div className="space-y-2"><div className="text-xs text-green-600 font-bold mb-1">✓ 구글 계정 연동됨</div><button onClick={handleFetchStock} className="w-full bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow hover:bg-green-700 transition">📥 재고 불러오기 (사용)</button></div>)) : (<div className="text-xs text-gray-500">Google API 초기화 중...</div>)}
+                                {isGapiReady ? (
+                                    !isLoggedIn ? (
+                                        <button onClick={handleLogin} className="w-full bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-200 transition mb-2">구글 로그인 (재고 연동)</button>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <div className="text-xs text-green-600 font-bold mb-1">✓ 구글 계정 연동됨</div>
+                                            <button onClick={handleFetchStock} className="w-full bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow hover:bg-green-700 transition">📥 재고 불러오기 (사용)</button>
+                                        </div>
+                                    )
+                                ) : (
+                                    <div className="text-xs text-gray-500">Google API 초기화 중...</div>
+                                )}
                             </div>
+
                             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                                 <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2 text-sm"><Settings size={16} /> 자재 설정</h3>
-                                <div className="mb-3 border-b pb-3"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" className="w-4 h-4 text-blue-600" checked={isUserStockMode} onChange={e => setIsUserStockMode(e.target.checked)} /><span className="text-sm font-bold text-gray-800">제한된 자재로만 계산 (Inventory)</span></label><p className="text-[10px] text-gray-400 mt-1 pl-6">체크 시, 아래 리스트에 있는 자재로만 CP를 짭니다.</p></div>
+                                <div className="mb-3 border-b pb-3">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" className="w-4 h-4 text-blue-600" checked={isUserStockMode} onChange={e => setIsUserStockMode(e.target.checked)} />
+                                        <span className="text-sm font-bold text-gray-800">제한된 자재로만 계산 (Inventory)</span>
+                                    </label>
+                                    <p className="text-[10px] text-gray-400 mt-1 pl-6">체크 시, 아래 리스트에 있는 자재로만 CP를 짭니다.</p>
+                                </div>
                                 {isUserStockMode ? (
                                     <div className="space-y-3">
                                         <div className="bg-blue-50 p-2 rounded border border-blue-100"><div className="text-xs font-bold text-blue-700 mb-1">표준 자재 추가</div><div className="flex gap-1 mb-1"><select className="flex-1 p-1 border rounded text-xs" value={`${newStd.w}*${newStd.h}|${newStd.t}`} onChange={e => { const val = e.target.value; if (!val) return; const [dim, t] = val.split('|'); const parts = dim.replace('x', '*').split('*'); setNewStd({ ...newStd, w: parts[0], h: parts[1], t: t, length: getStandardLengthsForInput(parts[0], parts[1], t)[0] }); }}>{getSpecOptions().map(opt => <option key={opt.value} value={opt.value.replace('x', '*')}>{opt.label}</option>)}</select><select className="w-20 p-1 border rounded text-xs" value={newStd.length} onChange={e => setNewStd({ ...newStd, length: +e.target.value })}>{getStandardLengthsForInput(newStd.w, newStd.h, newStd.t).map(l => <option key={l} value={l}>{l}</option>)}</select></div><div className="flex gap-1"><input type="number" className="flex-1 p-1 border rounded text-xs" placeholder="수량" value={newStd.qty} onChange={e => setNewStd({ ...newStd, qty: +e.target.value })} /><button onClick={() => handleAddUserStock('std')} className="px-2 bg-blue-600 text-white rounded text-xs font-bold">+</button></div></div>
@@ -560,6 +573,7 @@
                             </div>
                             <div className="p-3 bg-blue-50 rounded-lg text-xs text-blue-700">💡 <b>[작업 편의]</b> 모드는 잔재 150mm 이하(0 포함) 불가, 650mm 초과 기피, 마킹 뭉치기를 최우선으로 합니다.</div>
                         </div>
+
                         <div className="lg:col-span-3 bg-white p-0 rounded-xl shadow-sm border border-gray-200 flex flex-col h-[700px] overflow-hidden">
                             <div className="p-3 border-b bg-gray-50 flex justify-between items-center"><span className="text-sm font-bold text-gray-600">엑셀 붙여넣기 영역 (수정 가능)</span><button onClick={() => { updateCurrentData({ rawInput: '', gridData: [] }) }} className="text-xs text-red-500 hover:underline">초기화</button></div>
                             <div className="flex-1 overflow-auto custom-scrollbar relative bg-white">
@@ -572,13 +586,33 @@
         };
 
         // --- Result View ---
-        const ResultView = ({ currentDong, dongs, setCurrentDong, addDong, deleteDong, renameDong, resultsByDong, runAllDongs, openExcelModal, openStockModal, setViewMode, projectInfo, isNoDongMode, openCopyModal }) => {
+        const ResultView = ({ currentDong, dongs, setCurrentDong, addDong, deleteDong, renameDong, resultsByDong, runAllDongs, openExcelModal, openStockModal, setViewMode, setManualData, projectInfo, isNoDongMode }) => {
             const [resultTab, setResultTab] = useState('min_rows');
             const allResults = resultsByDong && currentDong ? resultsByDong[currentDong] : null;
             useEffect(() => { if (allResults && allResults['manual_result'] && !allResults['min_rows']) setResultTab('manual_result'); }, [allResults]);
             const results = allResults ? allResults[resultTab] : null;
             const specKeys = results ? Object.keys(results).sort() : [];
             let overallSeq = 1;
+            const handleCopyToManual = () => {
+                if (!results) return;
+                const newRows = [];
+                specKeys.forEach(specKey => {
+                    const { plan } = results[specKey];
+                    let w = "100", h = "100", t = "2.1";
+                    try { const dims = specKey.split(' ')[0] || ""; const tPart = specKey.split(' ')[1] || ""; if (dims.includes('*')) [w, h] = dims.split('*'); else if (dims.includes('x')) [w, h] = dims.split('x'); else { w = dims; h = ""; } t = tPart.replace('T', ''); } catch (e) { }
+                    let sortedPlan = [...plan]; sortedPlan.sort((a, b) => b.stockLength - a.stockLength);
+                    sortedPlan.forEach((group) => {
+                        const cuts = Array(8).fill().map(() => ({ l: '', count: '', marking: '' }));
+                        group.parts.forEach((part, idx) => { if (idx < 8) cuts[idx] = { l: part.length, count: (part.totalQty / group.qty), marking: part.marking }; });
+                        const newRow = { id: Date.now() + Math.random(), t: t, w: w, h: h, l: group.stockLength, qty: Math.floor(group.qty), cuts: cuts };
+                        newRows.push(newRow);
+                    });
+                });
+                setManualData(prev => ({ ...prev, [currentDong]: newRows }));
+                setViewMode('manual');
+                alert("현재 보고 있는 결과가 'CP 직접 작성' 화면으로 복사되었습니다.");
+            };
+
             const handlePdfDownload = () => { window.print(); };
 
             return (
@@ -586,7 +620,7 @@
                     <div className="flex justify-between items-center mb-4 print:hidden">
                         <h2 className="text-lg font-bold text-gray-800">CP 자동 결과 {isNoDongMode ? '' : `(${currentDong})`}</h2>
                         <div className="flex gap-2">
-                            <button onClick={openCopyModal} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-blue-600 transition flex items-center gap-2"><Copy size={16} /> 수정(결과 복사)</button>
+                            <button onClick={handleCopyToManual} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-blue-600 transition flex items-center gap-2"><Copy size={16} /> 수정 (결과 복사)</button>
                             <button onClick={runAllDongs} className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-gray-900 transition flex items-center gap-2"><Layers size={16} /> 전체 동 계산</button>
                             <button onClick={openStockModal} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-red-600 transition flex items-center gap-2"><Cloud size={16} /> 재고 차감</button>
                             <button onClick={openExcelModal} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-green-700 flex items-center gap-2 transition"><FileDown size={16} /> 엑셀 저장</button>
@@ -598,21 +632,23 @@
                     {(!allResults || !results) ? (<div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300 text-gray-400"><p>계산된 결과가 없습니다.</p></div>) : (
                         <div>
                             <div className="flex mb-4 border-b print:hidden gap-2">
-                                <button onClick={() => setResultTab('min_rows')} className={`px-6 py-3 font-bold text-sm ${resultTab === 'min_rows' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>① 작업 편의</button>
-                                <button onClick={() => setResultTab('min_loss')} className={`px-6 py-3 font-bold text-sm ${resultTab === 'min_loss' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}>② LOSS 최소화</button>
+                                <button onClick={() => setResultTab('min_rows')} className={`px-6 py-3 font-bold text-sm ${resultTab === 'min_rows' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>① 작업 편의 (Work Convenience)</button>
+                                <button onClick={() => setResultTab('min_loss')} className={`px-6 py-3 font-bold text-sm ${resultTab === 'min_loss' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}>② LOSS 최소화 (자재 절약)</button>
                                 {allResults['manual_result'] && <button onClick={() => setResultTab('manual_result')} className={`px-6 py-3 font-bold text-sm ${resultTab === 'manual_result' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>③ 수동 계산 결과</button>}
                             </div>
                             <div className="space-y-8 bg-white p-8 rounded-xl shadow-sm border border-gray-200 min-h-screen print:border-none print:p-0">
                                 {specKeys.map((specKey, idx) => {
                                     const { plan, summary } = results[specKey];
-                                    let w="?", h="?", t="?"; try { const dims = specKey.split(' ')[0] || ""; const tPart = specKey.split(' ')[1] || ""; if (dims.includes('*')) [w, h] = dims.split('*'); else if (dims.includes('x')) [w, h] = dims.split('x'); else { w = dims; h = ""; } t = tPart.replace('T', ''); } catch (e) { }
-                                    const displayLoss = Number(summary.totalLoss).toLocaleString();
+                                    let w = "?", h = "?", t = "?"; try { const dims = specKey.split(' ')[0] || ""; const tPart = specKey.split(' ')[1] || ""; if (dims.includes('*')) [w, h] = dims.split('*'); else if (dims.includes('x')) [w, h] = dims.split('x'); else { w = dims; h = ""; } t = tPart.replace('T', ''); } catch (e) { }
+                                    const totalBarsDisplay = summary.totalBars || plan.reduce((acc, p) => acc + Number(p.qty || 0), 0);
+                                    const totalLossValue = summary.totalLoss !== undefined ? summary.totalLoss : plan.reduce((acc, p) => acc + (Number(p.remainder || 0) * Number(p.qty || 0)), 0);
+                                    const displayLoss = Number(totalLossValue).toLocaleString();
                                     return (
                                         <div key={specKey || idx} className="break-before-page">
                                             <div className="flex items-center gap-3 mb-3 pb-2 border-b border-gray-100 print:border-none">
                                                 <span className={`font-bold px-3 py-1 rounded text-sm print:hidden ${resultTab === 'min_rows' ? 'bg-blue-100 text-blue-700' : (resultTab === 'min_loss' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700')}`}>#{idx + 1} {resultTab === 'min_rows' ? '작업편의' : (resultTab === 'min_loss' ? 'LOSS최소' : '수동결과')}</span>
                                                 <h3 className="font-bold text-xl text-gray-800">{specKey}</h3>
-                                                <div className="text-xs text-gray-500 ml-auto flex gap-4 print:text-black"><span>총 원본: <b>{summary.totalBars}본</b></span><span>총 잔재: <b>{displayLoss}mm</b></span><span>잔재율: {summary.lossRate}%</span></div>
+                                                <div className="text-xs text-gray-500 ml-auto flex gap-4 print:text-black"><span>총 원본: <b>{totalBarsDisplay}본</b></span><span>총 잔재: <b>{displayLoss}mm</b></span><span>잔재율: {summary.lossRate}%</span></div>
                                             </div>
                                             <table className="w-full border-collapse text-center text-xs">
                                                 <thead><tr className="bg-gray-100 text-gray-700 h-8 border-y border-gray-300 print:bg-gray-200"><th className="border-x border-gray-200 w-10">순번</th><th className="border-x border-gray-200 w-12">두께</th><th className="border-x border-gray-200 w-12">장변</th><th className="border-x border-gray-200 w-12">단변</th><th className="border-x border-gray-200 w-16">원본길이</th><th className="border-x border-gray-200 w-12">수량</th><th className="border-x border-gray-200 w-16 bg-white font-bold text-blue-600 border-2 border-blue-100 print:border">컷팅길이</th><th className="border-x border-gray-200 w-12">컷팅수</th><th className="border-x border-gray-200 w-12">수량</th><th className="border-x border-gray-200">마킹</th><th className="border-x border-gray-200 w-16">본당LOSS</th><th className="border-x border-gray-200 w-20">총LOSS</th><th className="border-x border-gray-200 w-12">비고</th></tr></thead>
@@ -641,60 +677,36 @@
 
         // --- Main App ---
         function App() {
+            const [user, setUser] = useState(null);
             const [viewMode, setViewMode] = useState('input');
+            const [isFirebaseReady, setIsFirebaseReady] = useState(false);
             const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
             const [isStockModalOpen, setIsStockModalOpen] = useState(false);
-            const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
             const [isCalculating, setIsCalculating] = useState(false);
             const [projectInfo, setProjectInfo] = useState({ company: '', site: '', note: '', isIronBanding: false, isUnder1Ton: false });
             const [dongs, setDongs] = useState(['1동']);
             const [currentDong, setCurrentDong] = useState('1동');
             const [isNoDongMode, setIsNoDongMode] = useState(false);
-            const [inputMode, setInputMode] = useState('sales');
 
             const globalSettings = STANDARD_STOCKS;
-            const [dongData, setDongData] = useState({ '1동': { rawInput: '', gridData: [], colMapping: { 1: 'width', 2: 'height', 3: 'thickness', 4: 'length', 7: 'qty', 13: 'marking' }, parsedItems: [], spec: '100*100', thickness: '2.1' } });
+            const [dongData, setDongData] = useState({ '1동': { rawInput: '', gridData: [], colMapping: { 1: 'width', 2: 'height', 3: 'thickness', 4: 'length', 8: 'qty', 13: 'marking' }, parsedItems: [], spec: '100*100', thickness: '2.1' } });
             const [resultsByDong, setResultsByDong] = useState({});
             const [activeTab, setActiveTab] = useState('standard');
             const [customStocks, setCustomStocks] = useState([{ w: '100', h: '100', t: '2.1', length: 6000, qty: 10 }]);
             const [isUserStockMode, setIsUserStockMode] = useState(false);
             const [userStockList, setUserStockList] = useState([]);
             const [manualData, setManualData] = useState({});
-            
             const getCurrentData = () => dongData[currentDong] || { rawInput: '', gridData: [], colMapping: {}, parsedItems: [], spec: '100*100', thickness: '2.1' };
-            const updateCurrentData = (updates) => { 
-                setDongData(prev => {
-                    const newData = { ...prev };
-                    newData[currentDong] = { ...prev[currentDong], ...updates };
-                    return newData; 
-                }); 
-            };
-
-            // 🚨 입력 양식 변경 시 열(Column) 맵핑 초기화 버그 해결 (State Deep Copy)
-            useEffect(() => {
-                setDongData(prev => {
-                    let isChanged = false;
-                    const next = { ...prev };
-                    Object.keys(next).forEach(d => {
-                        const expectedMap = inputMode === 'sales'
-                            ? { 1: 'width', 2: 'height', 3: 'thickness', 4: 'length', 7: 'qty', 13: 'marking' }
-                            : { 2: 'width', 3: 'height', 4: 'thickness', 5: 'length', 7: 'qty', 8: 'marking' };
-                        
-                        if (!next[d].colMapping || JSON.stringify(next[d].colMapping) !== JSON.stringify(expectedMap)) {
-                            next[d] = { ...next[d], colMapping: expectedMap };
-                            isChanged = true;
-                        }
-                    });
-                    return isChanged ? next : prev;
-                });
-            }, [inputMode]);
-
+            const updateCurrentData = (updates) => { setDongData(prev => ({ ...prev, [currentDong]: { ...prev[currentDong], ...updates } })); };
             const getStockLengths = (w, h, t) => { const dims = [parseInt(w), parseInt(h)].sort((a, b) => b - a); const specKey = `${dims[0]}x${dims[1]}`; const thickStr = String(t).trim(); const settings = globalSettings; if (settings[specKey]) { if (settings[specKey][thickStr]) return settings[specKey][thickStr]; if (thickStr === '2.3' && settings[specKey]['2.1']) return settings[specKey]['2.1']; if (settings[specKey]['all']) return settings[specKey]['all']; } return settings["default"] || []; };
-            const addDong = () => { const newDongName = prompt("새 동 이름을 입력하세요:"); if (newDongName && !dongs.includes(newDongName)) { setDongs([...dongs, newDongName]); setDongData(prev => ({ ...prev, [newDongName]: { rawInput: '', gridData: [], colMapping: inputMode === 'sales' ? { 1: 'width', 2: 'height', 3: 'thickness', 4: 'length', 7: 'qty', 13: 'marking' } : { 2: 'width', 3: 'height', 4: 'thickness', 5: 'length', 7: 'qty', 8: 'marking' }, parsedItems: [], spec: '100*100', thickness: '2.1' } })); setCurrentDong(newDongName); } };
+            const initFirebase = async () => { if (!window.FirebaseSDK) return; try { const { initializeApp, getAuth } = window.FirebaseSDK; } catch (e) { console.warn(e); } };
+            useEffect(() => { if (window.FirebaseSDK) initFirebase(); else window.addEventListener('firebase-sdk-ready', initFirebase); return () => window.removeEventListener('firebase-sdk-ready', initFirebase); }, []);
+            const addDong = () => { const newDongName = prompt("새 동 이름을 입력하세요:"); if (newDongName && !dongs.includes(newDongName)) { setDongs([...dongs, newDongName]); setDongData(prev => ({ ...prev, [newDongName]: { rawInput: '', gridData: [], colMapping: { 1: 'width', 2: 'height', 3: 'thickness', 4: 'length', 8: 'qty', 13: 'marking' }, parsedItems: [], spec: '100*100', thickness: '2.1' } })); setCurrentDong(newDongName); } };
             const renameDong = (oldName) => { const newName = prompt(`'${oldName}'의 새 이름을 입력하세요:`, oldName); if (newName && newName !== oldName && !dongs.includes(newName)) { setDongs(prev => prev.map(d => d === oldName ? newName : d)); if (currentDong === oldName) setCurrentDong(newName); setDongData(prev => { const n = { ...prev }; n[newName] = n[oldName]; delete n[oldName]; return n; }); setResultsByDong(prev => { const n = { ...prev }; if (n[oldName]) { n[newName] = n[oldName]; delete n[oldName]; } return n; }); setManualData(prev => { const n = { ...prev }; n[newName] = n[oldName]; delete n[oldName]; return n; }); } };
             const deleteDong = (targetDong) => { if (dongs.length <= 1) { alert("최소 하나의 동은 있어야 합니다."); return; } if (confirm(`'${targetDong}'을 삭제하시겠습니까?`)) { const newDongs = dongs.filter(d => d !== targetDong); setDongs(newDongs); if (currentDong === targetDong) setCurrentDong(newDongs[0]); setDongData(prev => { const n = { ...prev }; delete n[targetDong]; return n; }); setResultsByDong(prev => { const n = { ...prev }; delete n[targetDong]; return n; }); setManualData(prev => { const n = { ...prev }; delete n[targetDong]; return n; }); } };
             const handlePaste = (e) => { e.preventDefault(); const text = e.clipboardData.getData('text'); const rows = text.trim().split('\n').map(row => row.split('\t')); updateCurrentData({ rawInput: text, gridData: rows }); };
 
+            // --- Google Sheets Logic (Auto Login Added) ---
             const [tokenClient, setTokenClient] = useState(null);
             const [isGapiReady, setIsGapiReady] = useState(false);
             const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -704,11 +716,43 @@
                     gapi.load('client', async () => { 
                         await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] }); 
                         setIsGapiReady(true);
+                        
+                        // Auto-login check
                         const stored = localStorage.getItem('gapi_token');
-                        if (stored) { try { const { token, expiry } = JSON.parse(stored); if (Date.now() < expiry) { gapi.client.setToken(token); setIsLoggedIn(true); } else { localStorage.removeItem('gapi_token'); } } catch (e) { } }
+                        if (stored) {
+                            try {
+                                const { token, expiry } = JSON.parse(stored);
+                                if (Date.now() < expiry) {
+                                    gapi.client.setToken(token);
+                                    setIsLoggedIn(true);
+                                    console.log('Auto-logged in via stored token');
+                                } else {
+                                    localStorage.removeItem('gapi_token'); // Clean up expired
+                                }
+                            } catch (e) {
+                                console.error('Error parsing stored token', e);
+                            }
+                        }
                     }); 
                 };
-                const initGis = () => { const client = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPES, callback: (tokenResponse) => { if (tokenResponse && tokenResponse.access_token) { const expiryTime = Date.now() + (tokenResponse.expires_in * 1000); localStorage.setItem('gapi_token', JSON.stringify({ token: tokenResponse, expiry: expiryTime })); setIsLoggedIn(true); } } }); setTokenClient(client); };
+                const initGis = () => { 
+                    const client = google.accounts.oauth2.initTokenClient({ 
+                        client_id: CLIENT_ID, 
+                        scope: SCOPES, 
+                        callback: (tokenResponse) => { 
+                            if (tokenResponse && tokenResponse.access_token) { 
+                                // Save token with expiry (approx 1 hour)
+                                const expiryTime = Date.now() + (tokenResponse.expires_in * 1000);
+                                localStorage.setItem('gapi_token', JSON.stringify({
+                                    token: tokenResponse,
+                                    expiry: expiryTime
+                                }));
+                                setIsLoggedIn(true); 
+                            } 
+                        } 
+                    }); 
+                    setTokenClient(client); 
+                };
                 if (window.gapi) initGapi(); if (window.google) initGis();
             }, []);
 
@@ -716,15 +760,17 @@
 
             const handleFetchStock = async () => {
                 try {
-                    const response = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: `${SHEET_NAME}!AL5:AL37` });
+                    const response = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'Sheet1!AL5:AL37' });
                     const values = response.result.values;
                     if (!values || values.length === 0) { alert('스프레드시트에서 재고 정보를 찾을 수 없습니다.'); return; }
                     const fetchedStocks = [];
                     SHEET_ROW_MAP.forEach(map => {
                         const index = map.row - 5; 
                         if (values[index] && values[index][0]) {
+                            // 💡 쉼표(,) 제거 로직 추가
                             const rawValue = String(values[index][0]).replace(/,/g, '');
                             const qty = parseInt(rawValue, 10);
+                            
                             if (!isNaN(qty) && qty > 0) { fetchedStocks.push({ id: Date.now() + Math.random(), type: 'std', w: String(map.w), h: String(map.h), t: map.t, length: map.l, qty: qty }); }
                         }
                     });
@@ -732,19 +778,20 @@
                 } catch (error) { console.error("Error fetching stock:", error); alert("재고를 불러오는 중 오류가 발생했습니다.\n로그인 상태를 확인하거나 권한을 확인해주세요."); }
             };
 
-            const getColumnLetter = (colIndex) => { let temp, letter = ''; while (colIndex > 0) { temp = (colIndex - 1) % 26; letter = String.fromCharCode(temp + 65) + letter; colIndex = (colIndex - temp - 1) / 26; } return letter; }
+            const getColumnLetter = (colIndex) => {
+                let temp, letter = '';
+                while (colIndex > 0) { temp = (colIndex - 1) % 26; letter = String.fromCharCode(temp + 65) + letter; colIndex = (colIndex - temp - 1) / 26; }
+                return letter;
+            }
 
-            const handleUpdateStock = async (targetScope, options) => {
+            const handleUpdateStock = async (targetScope, selectedMode) => {
                 if (!isLoggedIn) { alert("구글 로그인이 필요합니다."); return; }
+                // Calculate total used qty per spec
                 const usedMap = {}; 
                 const targets = targetScope === 'all' ? dongs : [currentDong];
                 let hasData = false;
 
                 targets.forEach(dName => {
-                    let selectedMode = 'min_rows';
-                    if (targetScope === 'current') selectedMode = options.mode;
-                    else selectedMode = options.modeMap[dName];
-
                     if (resultsByDong[dName] && resultsByDong[dName][selectedMode]) {
                         const planResult = resultsByDong[dName][selectedMode];
                         hasData = true;
@@ -754,7 +801,7 @@
                                 let w = "?", h = "?", t = "?"; try { const dims = specKey.split(' ')[0] || ""; const tPart = specKey.split(' ')[1] || ""; if (dims.includes('*')) [w, h] = dims.split('*'); else if (dims.includes('x')) [w, h] = dims.split('x'); else { w = dims; h = ""; } t = tPart.replace('T', ''); } catch (e) { }
                                 const key = `${parseInt(w)}|${parseInt(h)}|${t.trim()}|${group.stockLength}`;
                                 if(!usedMap[key]) usedMap[key] = 0;
-                                usedMap[key] += Number(group.qty);
+                                usedMap[key] += Number(group.qty); // Accumulate quantity
                             });
                         });
                     }
@@ -763,7 +810,7 @@
                 if (!hasData) { alert("선택한 범위/모드에 대한 계산 결과가 없습니다."); return; }
 
                 try {
-                    const headerRange = `${SHEET_NAME}!H4:AK4`;
+                    const headerRange = 'Sheet1!H4:AK4';
                     const headerRes = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: headerRange });
                     const headerValues = headerRes.result.values || [[]];
                     const headers = headerValues[0];
@@ -774,13 +821,13 @@
 
                     const updateData = [];
                     const companyName = `${projectInfo.company || '업체미상'}(${projectInfo.site || '현장미상'})`;
-                    updateData.push({ range: `${SHEET_NAME}!${targetColLetter}4`, values: [[companyName]] });
+                    updateData.push({ range: `Sheet1!${targetColLetter}4`, values: [[companyName]] });
 
                     SHEET_ROW_MAP.forEach(map => {
                         const key = `${map.w}|${map.h}|${map.t}|${map.l}`;
                         if(usedMap[key]) {
                             const usedQty = usedMap[key];
-                            updateData.push({ range: `${SHEET_NAME}!${targetColLetter}${map.row}`, values: [[-usedQty]] });
+                            updateData.push({ range: `Sheet1!${targetColLetter}${map.row}`, values: [[-usedQty]] });
                         }
                     });
 
@@ -793,54 +840,207 @@
                 } catch (error) { console.error("Update Error:", error); alert("재고 차감(저장) 중 오류가 발생했습니다: " + error.message); }
             };
 
-            const solvePatternBased = (items, availableStocks, mode, strategy = 'mixed', randomize = false, stockLimits = {}) => { let inventory = {}; items.forEach(item => { const itemKey = item.id; if (!inventory[itemKey]) { inventory[itemKey] = { qty: item.qty, length: item.length, specKey: item.specKey, t: item.t, w: item.w, h: item.h, marking: item.marking, initQty: item.qty, id: item.id }; } }); let markings = Object.keys(inventory); if (randomize) { markings.sort(() => Math.random() - 0.5); } let finalPlan = []; let currentStockLimits = { ...stockLimits }; while (markings.some(m => inventory[m].qty > 0)) { let bestPattern = null; let bestScore = -Infinity; for (let stockLen of availableStocks) { if (currentStockLimits[stockLen] !== undefined && currentStockLimits[stockLen] <= 0) continue; let currentPattern = { parts: [], remainder: stockLen, tempCounts: {}, stockLength: stockLen, totalPartCount: 0, shortPartCount: 0, itemsUnder1000Count: 0 }; let candidateMarkings = markings.filter(m => inventory[m].qty > 0 && inventory[m].length <= currentPattern.remainder - 150); if (candidateMarkings.length === 0) continue; if (mode === 'min_rows' && strategy === 'balanced') { let loop = true; while (loop && currentPattern.remainder >= 150) { loop = false; for (let mKey of candidateMarkings) { const item = inventory[mKey]; let taken = currentPattern.tempCounts[mKey] || 0; if (item.qty > taken && item.length <= currentPattern.remainder) { currentPattern.parts.push({ ...item, count: 1 }); currentPattern.remainder -= item.length; currentPattern.tempCounts[mKey] = taken + 1; currentPattern.totalPartCount++; if (item.length <= 500) currentPattern.shortPartCount++; loop = true; } } } const consolidatedParts = []; currentPattern.parts.forEach(p => { const existing = consolidatedParts.find(cp => cp.id === p.id); if (existing) existing.count++; else consolidatedParts.push({ ...p, count: 1 }); }); currentPattern.parts = consolidatedParts; } else { for (let mKey of candidateMarkings) { const item = inventory[mKey]; if (item.qty <= 0) continue; let maxPossibleInOneBar = Math.floor((currentPattern.remainder - 150) / item.length); if (maxPossibleInOneBar <= 0) continue; let countToTake = 1; if (item.qty <= maxPossibleInOneBar) countToTake = item.qty; else { for (let d = maxPossibleInOneBar; d >= 2; d--) { if (item.qty % d === 0) { countToTake = d; break; } } } if (countToTake > 0) { currentPattern.parts.push({ ...item, count: countToTake }); currentPattern.remainder -= (item.length * countToTake); currentPattern.tempCounts[mKey] = countToTake; currentPattern.totalPartCount += countToTake; if (item.length <= 500) currentPattern.shortPartCount += countToTake; if (item.length <= 1000) currentPattern.itemsUnder1000Count += countToTake; } } } if (currentPattern.remainder < 150) continue; let score = 0; if (mode === 'min_rows') { if (currentPattern.remainder >= 150 && currentPattern.remainder <= 650) { score += 20000000; } else if (currentPattern.remainder > 650) { score -= (currentPattern.remainder * 50); score -= 5000000; } else score -= 999999999; let maxRepeats = Infinity; currentPattern.parts.forEach(p => { let available = inventory[p.id].qty; maxRepeats = Math.min(maxRepeats, Math.floor(available / p.count)); }); if (currentStockLimits[stockLen] !== undefined) maxRepeats = Math.min(maxRepeats, currentStockLimits[stockLen]); score += (maxRepeats * 1000000); let itemsCleared = 0; currentPattern.parts.forEach(p => { if (inventory[p.id].qty === p.count * maxRepeats) itemsCleared++; }); score += (itemsCleared * 500000); if (currentPattern.shortPartCount > 1) score -= 5000000; if (currentPattern.totalPartCount > 8) score -= 1000000; score -= (stockLen * 10); } else score -= currentPattern.remainder; if (score > bestScore) { bestScore = score; bestPattern = currentPattern; } } if (bestPattern) { let repeatQty = Infinity; bestPattern.parts.forEach(p => { repeatQty = Math.min(repeatQty, Math.floor(inventory[p.id].qty / p.count)); }); if (currentStockLimits[bestPattern.stockLength] !== undefined) repeatQty = Math.min(repeatQty, currentStockLimits[bestPattern.stockLength]); if (repeatQty > 0) { if (currentStockLimits[bestPattern.stockLength] !== undefined) currentStockLimits[bestPattern.stockLength] -= repeatQty; const finalParts = []; bestPattern.parts.forEach(p => { inventory[p.id].qty -= (p.count * repeatQty); finalParts.push({ ...p, totalQty: p.count * repeatQty }); }); finalPlan.push({ stockLength: bestPattern.stockLength, parts: finalParts, remainder: bestPattern.remainder, qty: repeatQty }); } else break; } else { markings.forEach(m => { if (inventory[m].qty > 0) { let item = inventory[m]; let selectedStock = availableStocks.find(s => s >= item.length + 150); if (!selectedStock) selectedStock = Math.max(...availableStocks); finalPlan.push({ stockLength: selectedStock, parts: [{ ...item, count: 1, totalQty: item.qty }], remainder: selectedStock - item.length, qty: item.qty }); item.qty = 0; } }); } } return finalPlan; };
-            const calculatePlanScore = (plan, mode) => { if (mode === 'min_loss') return -(plan.reduce((acc, p) => acc + (p.remainder * p.qty), 0)); let score = 0; score -= (plan.length * 10000000); let markingInSequences = {}; plan.forEach((pattern, idx) => { pattern.parts.forEach(p => { if (!markingInSequences[p.marking]) markingInSequences[p.marking] = new Set(); markingInSequences[p.marking].add(idx); }); }); Object.keys(markingInSequences).forEach(m => { if (markingInSequences[m].size > 1) score -= (markingInSequences[m].size * 2000000); }); plan.forEach(pattern => { if (pattern.remainder < 150) score -= 1000000000; if (pattern.remainder >= 150 && pattern.remainder <= 650) score += 500000; else if (pattern.remainder > 650) score -= (pattern.remainder * 10); let shortCount = pattern.parts.reduce((sum, p) => p.length <= 500 ? sum + p.count : sum, 0); if (shortCount > 1) score -= 1000000; let itemsUnder1000Cuts = pattern.parts.reduce((sum, p) => p.length <= 1000 ? sum + p.count : sum, 0); if (itemsUnder1000Cuts > 1) score += (itemsUnder1000Cuts * 2000); }); return score; };
-            const runAdvancedOptimization = (items, mode) => { const groups = {}; items.forEach(item => { if (!groups[item.specKey]) groups[item.specKey] = []; groups[item.specKey].push(item); }); const computedResults = {}; Object.keys(groups).forEach(specKey => { let stockW = '100', stockH = '100', stockT = '2.1'; try { const dims = specKey.split(' ')[0] || "100*100"; const thick = specKey.split(' ')[1] || "2.1T"; if (dims.includes('*')) [stockW, stockH] = dims.split('*'); else if (dims.includes('x')) [stockW, stockH] = dims.split('x'); stockT = thick.replace('T', ''); } catch (e) { } const groupItems = groups[specKey]; let availableStocks = []; let stockLimits = {}; if (isUserStockMode) { userStockList.forEach(s => { if (parseInt(s.w) == parseInt(stockW) && parseInt(s.h) == parseInt(stockH) && s.t == stockT) { if (!stockLimits[s.length]) stockLimits[s.length] = 0; stockLimits[s.length] += s.qty; availableStocks.push(s.length); } }); availableStocks = [...new Set(availableStocks)].sort((a, b) => a - b); } else { let stds = getStockLengths(stockW, stockH, stockT) || []; if (activeTab === 'custom') { customStocks.forEach(s => { if (parseInt(s.w) == parseInt(stockW) && parseInt(s.h) == parseInt(stockH) && s.t == stockT) { if (!stockLimits[s.length]) stockLimits[s.length] = 0; stockLimits[s.length] += s.qty; availableStocks.push(s.length); } }); } stds.forEach(l => { if (!availableStocks.includes(l)) availableStocks.push(l); }); availableStocks.sort((a, b) => a - b); } if (availableStocks.length === 0) availableStocks = [6000]; const SIMULATION_RUNS = mode === 'min_rows' ? 2000 : 500; const validPlans = []; for (let i = 0; i < SIMULATION_RUNS; i++) { const plan = solvePatternBased(groupItems, availableStocks, mode, 'mixed', true, stockLimits); if (plan.length > 0) { const score = calculatePlanScore(plan, mode); validPlans.push({ plan, score }); } } if (mode === 'min_rows') { for (let i = 0; i < SIMULATION_RUNS; i++) { const plan = solvePatternBased(groupItems, availableStocks, mode, 'balanced', true, stockLimits); if (plan.length > 0) { const score = calculatePlanScore(plan, mode); validPlans.push({ plan, score }); } } } if (validPlans.length > 0) { validPlans.sort((a, b) => { if (b.score !== a.score) return b.score - a.score; return a.plan.reduce((acc, p) => acc + (p.remainder * p.qty), 0) - b.plan.reduce((acc, p) => acc + (p.remainder * p.qty), 0); }); const bestPlan = validPlans[0].plan; const totalBars = bestPlan.reduce((acc, p) => acc + p.qty, 0); const totalStockLen = bestPlan.reduce((acc, p) => acc + (p.stockLength * p.qty), 0); const totalLoss = bestPlan.reduce((acc, p) => acc + (p.remainder * p.qty), 0); const lossRate = totalStockLen ? ((totalLoss / totalStockLen) * 100).toFixed(2) : 0; computedResults[specKey] = { plan: bestPlan, summary: { totalBars, lossRate, totalLoss } }; } }); return computedResults; };
-
-            const processGridData = () => { const data = getCurrentData(); const items = parseItemsFromGrid(data.gridData, data.colMapping, data.spec, data.thickness); if (items.length === 0) { alert("유효한 데이터가 없습니다."); return; } updateCurrentData({ parsedItems: items }); setIsCalculating(true); setTimeout(() => { const resMinRows = runAdvancedOptimization(items, 'min_rows'); const resMinLoss = runAdvancedOptimization(items, 'min_loss'); setResultsByDong(prev => ({ ...prev, [currentDong]: { ...prev[currentDong], min_rows: resMinRows, min_loss: resMinLoss } })); setViewMode('result'); setIsCalculating(false); }, 100); };
-            const runAllDongs = () => { setIsCalculating(true); setTimeout(() => { const newResults = {}; let processedCount = 0; dongs.forEach(dName => { const dData = dongData[dName]; if (!dData || !dData.gridData || dData.gridData.length === 0) return; const items = parseItemsFromGrid(dData.gridData, dData.colMapping, dData.spec, dData.thickness); if (items.length > 0) { newResults[dName] = { min_rows: runAdvancedOptimization(items, 'min_rows'), min_loss: runAdvancedOptimization(items, 'min_loss') }; processedCount++; } }); setResultsByDong(prev => { const merged = { ...newResults }; Object.keys(prev).forEach(d => { if (prev[d]?.manual_result) { if (!merged[d]) merged[d] = {}; merged[d].manual_result = prev[d].manual_result; } }); return merged; }); if (processedCount > 0) { alert(`총 ${processedCount}개 동의 계산이 완료되었습니다.\n(기존 수동 작성 결과는 유지됩니다.)`); setViewMode('result'); } else { alert("계산할 데이터가 있는 동이 없습니다."); } setIsCalculating(false); }, 100); };
-            
-            const handleCopySelected = (selectedDongs) => {
-                if (selectedDongs.length === 0) return alert('선택된 동이 없습니다.');
-                const newManualData = { ...manualData };
-                selectedDongs.forEach(dName => {
-                    const res = resultsByDong[dName];
-                    if (res && res['min_rows']) {
-                        const specKeys = Object.keys(res['min_rows']).sort();
-                        const newRows = [];
-                        specKeys.forEach(specKey => {
-                            const { plan } = res['min_rows'][specKey];
-                            let w="100", h="100", t="2.1"; try { const dims = specKey.split(' ')[0] || ""; const tPart = specKey.split(' ')[1] || ""; if (dims.includes('*')) [w, h] = dims.split('*'); else if (dims.includes('x')) [w, h] = dims.split('x'); t = tPart.replace('T', ''); } catch(e){}
-                            let sortedPlan = [...plan]; sortedPlan.sort((a, b) => b.stockLength - a.stockLength);
-                            sortedPlan.forEach(group => {
-                                const cuts = Array(8).fill().map(() => ({ l: '', count: '', marking: '' }));
-                                group.parts.forEach((part, idx) => { if (idx < 8) cuts[idx] = { l: part.length, count: (part.totalQty / group.qty), marking: part.marking }; });
-                                const newRow = { id: Date.now() + Math.random(), t, w, h, l: group.stockLength, qty: Math.floor(group.qty), cuts };
-                                newRows.push(newRow);
-                            });
-                        });
-                        newManualData[dName] = newRows;
-                    }
+            // *** OPTIMIZATION ENGINE (Modified to fix Marking Duplicate Bug) ***
+            const solvePatternBased = (items, availableStocks, mode, strategy = 'mixed', randomize = false, stockLimits = {}) => {
+                let inventory = {}; 
+                // BUG FIX: Changed key from 'item.marking' to 'item.id' (unique per row)
+                // This prevents items with same marking but different specs from overwriting each other.
+                items.forEach(item => { 
+                    const itemKey = item.id; // Unique Key
+                    if (!inventory[itemKey]) { 
+                        inventory[itemKey] = { qty: item.qty, length: item.length, specKey: item.specKey, t: item.t, w: item.w, h: item.h, marking: item.marking, initQty: item.qty, id: item.id }; 
+                    } 
                 });
-                setManualData(newManualData);
-                setIsCopyModalOpen(false);
-                setViewMode('manual');
-                alert(`${selectedDongs.length}개 동의 결과가 복사되었습니다.`);
+                
+                let markings = Object.keys(inventory); // 'markings' is now list of unique IDs
+                if (randomize) { markings.sort(() => Math.random() - 0.5); }
+                let finalPlan = []; let currentStockLimits = { ...stockLimits };
+                
+                while (markings.some(m => inventory[m].qty > 0)) {
+                    let bestPattern = null; let bestScore = -Infinity;
+                    for (let stockLen of availableStocks) {
+                        if (currentStockLimits[stockLen] !== undefined && currentStockLimits[stockLen] <= 0) continue;
+                        let currentPattern = { parts: [], remainder: stockLen, tempCounts: {}, stockLength: stockLen, totalPartCount: 0, shortPartCount: 0, itemsUnder1000Count: 0 };
+                        // Filter candidates by remaining length
+                        let candidateMarkings = markings.filter(m => inventory[m].qty > 0 && inventory[m].length <= currentPattern.remainder - 150);
+                        if (candidateMarkings.length === 0) continue;
+                        
+                        if (mode === 'min_rows' && strategy === 'balanced') {
+                            let loop = true;
+                            while (loop && currentPattern.remainder >= 150) {
+                                loop = false;
+                                for (let mKey of candidateMarkings) {
+                                    const item = inventory[mKey];
+                                    let taken = currentPattern.tempCounts[mKey] || 0;
+                                    if (item.qty > taken && item.length <= currentPattern.remainder) {
+                                        currentPattern.parts.push({ ...item, count: 1 }); // Use item spread to keep ID/Marking correct
+                                        currentPattern.remainder -= item.length;
+                                        currentPattern.tempCounts[mKey] = taken + 1;
+                                        currentPattern.totalPartCount++;
+                                        if (item.length <= 500) currentPattern.shortPartCount++;
+                                        loop = true;
+                                    }
+                                }
+                            }
+                            // Consolidation for display
+                            const consolidatedParts = [];
+                            currentPattern.parts.forEach(p => {
+                                // Consolidate based on ID (which implies unique row)
+                                const existing = consolidatedParts.find(cp => cp.id === p.id);
+                                if (existing) existing.count++;
+                                else consolidatedParts.push({ ...p, count: 1 });
+                            });
+                            currentPattern.parts = consolidatedParts;
+                        } else {
+                            for (let mKey of candidateMarkings) {
+                                const item = inventory[mKey]; if (item.qty <= 0) continue;
+                                let maxPossibleInOneBar = Math.floor((currentPattern.remainder - 150) / item.length);
+                                if (maxPossibleInOneBar <= 0) continue;
+                                let countToTake = 1;
+                                if (item.qty <= maxPossibleInOneBar) countToTake = item.qty;
+                                else { for (let d = maxPossibleInOneBar; d >= 2; d--) { if (item.qty % d === 0) { countToTake = d; break; } } }
+                                if (countToTake > 0) {
+                                    currentPattern.parts.push({ ...item, count: countToTake });
+                                    currentPattern.remainder -= (item.length * countToTake);
+                                    currentPattern.tempCounts[mKey] = countToTake;
+                                    currentPattern.totalPartCount += countToTake;
+                                    if (item.length <= 500) currentPattern.shortPartCount += countToTake;
+                                    if (item.length <= 1000) currentPattern.itemsUnder1000Count += countToTake;
+                                }
+                            }
+                        }
+                        
+                        if (currentPattern.remainder < 150) continue;
+                        
+                        let score = 0;
+                        if (mode === 'min_rows') {
+                            if (currentPattern.remainder >= 150 && currentPattern.remainder <= 650) { score += 20000000; }
+                            else if (currentPattern.remainder > 650) { score -= (currentPattern.remainder * 50); score -= 5000000; }
+                            else score -= 999999999;
+                            let maxRepeats = Infinity;
+                            currentPattern.parts.forEach(p => {
+                                // p.id corresponds to mKey
+                                let available = inventory[p.id].qty;
+                                maxRepeats = Math.min(maxRepeats, Math.floor(available / p.count));
+                            });
+                            if (currentStockLimits[stockLen] !== undefined) maxRepeats = Math.min(maxRepeats, currentStockLimits[stockLen]);
+                            score += (maxRepeats * 1000000);
+                            let itemsCleared = 0;
+                            currentPattern.parts.forEach(p => {
+                                if (inventory[p.id].qty === p.count * maxRepeats) itemsCleared++;
+                            });
+                            score += (itemsCleared * 500000);
+                            if (currentPattern.shortPartCount > 1) score -= 5000000;
+                            if (currentPattern.totalPartCount > 8) score -= 1000000;
+                            score -= (stockLen * 10);
+                        } else score -= currentPattern.remainder;
+                        if (score > bestScore) { bestScore = score; bestPattern = currentPattern; }
+                    }
+                    
+                    if (bestPattern) {
+                        let repeatQty = Infinity; 
+                        bestPattern.parts.forEach(p => { 
+                            repeatQty = Math.min(repeatQty, Math.floor(inventory[p.id].qty / p.count)); 
+                        });
+                        
+                        if (currentStockLimits[bestPattern.stockLength] !== undefined) repeatQty = Math.min(repeatQty, currentStockLimits[bestPattern.stockLength]);
+                        
+                        if (repeatQty > 0) {
+                            if (currentStockLimits[bestPattern.stockLength] !== undefined) currentStockLimits[bestPattern.stockLength] -= repeatQty;
+                            const finalParts = [];
+                            bestPattern.parts.forEach(p => { 
+                                inventory[p.id].qty -= (p.count * repeatQty); 
+                                finalParts.push({ ...p, totalQty: p.count * repeatQty }); 
+                            });
+                            finalPlan.push({ stockLength: bestPattern.stockLength, parts: finalParts, remainder: bestPattern.remainder, qty: repeatQty });
+                        } else break;
+                    } else {
+                        // Fallback: take remaining items one by one
+                        markings.forEach(m => {
+                            if (inventory[m].qty > 0) {
+                                let item = inventory[m]; 
+                                let selectedStock = availableStocks.find(s => s >= item.length + 150); 
+                                if (!selectedStock) selectedStock = Math.max(...availableStocks);
+                                finalPlan.push({ stockLength: selectedStock, parts: [{ ...item, count: 1, totalQty: item.qty }], remainder: selectedStock - item.length, qty: item.qty });
+                                item.qty = 0;
+                            }
+                        });
+                    }
+                }
+                return finalPlan;
             };
 
+            const calculatePlanScore = (plan, mode) => {
+                if (mode === 'min_loss') return -(plan.reduce((acc, p) => acc + (p.remainder * p.qty), 0));
+                let score = 0; score -= (plan.length * 10000000);
+                let markingInSequences = {};
+                plan.forEach((pattern, idx) => { pattern.parts.forEach(p => { if (!markingInSequences[p.marking]) markingInSequences[p.marking] = new Set(); markingInSequences[p.marking].add(idx); }); });
+                Object.keys(markingInSequences).forEach(m => { if (markingInSequences[m].size > 1) score -= (markingInSequences[m].size * 2000000); });
+                plan.forEach(pattern => {
+                    if (pattern.remainder < 150) score -= 1000000000;
+                    if (pattern.remainder >= 150 && pattern.remainder <= 650) score += 500000; else if (pattern.remainder > 650) score -= (pattern.remainder * 10);
+                    let shortCount = pattern.parts.reduce((sum, p) => p.length <= 500 ? sum + p.count : sum, 0); if (shortCount > 1) score -= 1000000;
+                    let itemsUnder1000Cuts = pattern.parts.reduce((sum, p) => p.length <= 1000 ? sum + p.count : sum, 0); if (itemsUnder1000Cuts > 1) score += (itemsUnder1000Cuts * 2000);
+                });
+                return score;
+            };
+
+            const runAdvancedOptimization = (items, mode) => {
+                const groups = {}; items.forEach(item => { if (!groups[item.specKey]) groups[item.specKey] = []; groups[item.specKey].push(item); }); const computedResults = {};
+                Object.keys(groups).forEach(specKey => {
+                    let stockW = '100', stockH = '100', stockT = '2.1'; try { const dims = specKey.split(' ')[0] || "100*100"; const thick = specKey.split(' ')[1] || "2.1T"; if (dims.includes('*')) [stockW, stockH] = dims.split('*'); else if (dims.includes('x')) [stockW, stockH] = dims.split('x'); stockT = thick.replace('T', ''); } catch (e) { }
+                    const groupItems = groups[specKey];
+                    let availableStocks = []; let stockLimits = {};
+                    if (isUserStockMode) { userStockList.forEach(s => { if (parseInt(s.w) == parseInt(stockW) && parseInt(s.h) == parseInt(stockH) && s.t == stockT) { if (!stockLimits[s.length]) stockLimits[s.length] = 0; stockLimits[s.length] += s.qty; availableStocks.push(s.length); } }); availableStocks = [...new Set(availableStocks)].sort((a, b) => a - b); }
+                    else {
+                        let stds = getStockLengths(stockW, stockH, stockT) || [];
+                        if (activeTab === 'custom') { customStocks.forEach(s => { if (parseInt(s.w) == parseInt(stockW) && parseInt(s.h) == parseInt(stockH) && s.t == stockT) { if (!stockLimits[s.length]) stockLimits[s.length] = 0; stockLimits[s.length] += s.qty; availableStocks.push(s.length); } }); }
+                        stds.forEach(l => { if (!availableStocks.includes(l)) availableStocks.push(l); }); availableStocks.sort((a, b) => a - b);
+                    }
+                    if (availableStocks.length === 0) availableStocks = [6000];
+                    const SIMULATION_RUNS = mode === 'min_rows' ? 2000 : 500; const validPlans = [];
+                    // Run with default greedy
+                    for (let i = 0; i < SIMULATION_RUNS; i++) {
+                        const plan = solvePatternBased(groupItems, availableStocks, mode, 'mixed', true, stockLimits);
+                        if (plan.length > 0) { const score = calculatePlanScore(plan, mode); validPlans.push({ plan, score }); }
+                    }
+                    // Run with balanced strategy for min_rows
+                    if (mode === 'min_rows') {
+                        for (let i = 0; i < SIMULATION_RUNS; i++) {
+                            const plan = solvePatternBased(groupItems, availableStocks, mode, 'balanced', true, stockLimits);
+                            if (plan.length > 0) { const score = calculatePlanScore(plan, mode); validPlans.push({ plan, score }); }
+                        }
+                    }
+
+                    if (validPlans.length > 0) {
+                        validPlans.sort((a, b) => {
+                            if (b.score !== a.score) return b.score - a.score;
+                            return a.plan.reduce((acc, p) => acc + (p.remainder * p.qty), 0) - b.plan.reduce((acc, p) => acc + (p.remainder * p.qty), 0);
+                        });
+                        const bestPlan = validPlans[0].plan;
+                        const totalBars = bestPlan.reduce((acc, p) => acc + p.qty, 0); const totalStockLen = bestPlan.reduce((acc, p) => acc + (p.stockLength * p.qty), 0); const totalLoss = bestPlan.reduce((acc, p) => acc + (p.remainder * p.qty), 0); const lossRate = totalStockLen ? ((totalLoss / totalStockLen) * 100).toFixed(2) : 0;
+                        computedResults[specKey] = { plan: bestPlan, summary: { totalBars, lossRate, totalLoss } };
+                    }
+                });
+                return computedResults;
+            };
+
+            const processGridData = () => { const data = getCurrentData(); const items = parseItemsFromGrid(data.gridData, data.colMapping, data.spec, data.thickness); if (items.length === 0) { alert("유효한 데이터가 없습니다."); return; } updateCurrentData({ parsedItems: items }); setIsCalculating(true); setTimeout(() => { const resMinRows = runAdvancedOptimization(items, 'min_rows'); const resMinLoss = runAdvancedOptimization(items, 'min_loss'); setResultsByDong(prev => ({ ...prev, [currentDong]: { min_rows: resMinRows, min_loss: resMinLoss } })); setViewMode('result'); setIsCalculating(false); }, 100); };
+            const runAllDongs = () => { setIsCalculating(true); setTimeout(() => { const newResults = {}; let processedCount = 0; dongs.forEach(dName => { const dData = dongData[dName]; if (!dData || !dData.gridData || dData.gridData.length === 0) return; const items = parseItemsFromGrid(dData.gridData, dData.colMapping, dData.spec, dData.thickness); if (items.length > 0) { newResults[dName] = { min_rows: runAdvancedOptimization(items, 'min_rows'), min_loss: runAdvancedOptimization(items, 'min_loss') }; processedCount++; } }); if (processedCount > 0) { setResultsByDong(newResults); alert(`총 ${processedCount}개 동의 계산이 완료되었습니다.`); setViewMode('result'); } else { alert("계산할 데이터가 있는 동이 없습니다."); } setIsCalculating(false); }, 100); };
             const handleManualToResult = (rows) => { if (!rows || rows.length === 0) { alert("데이터가 없습니다."); return; } const groups = {}; rows.forEach(row => { const dims = [parseInt(row.w), parseInt(row.h)].sort((a, b) => b - a); const specKey = `${dims[0]}*${dims[1]} ${row.t}T`; if (!groups[specKey]) groups[specKey] = []; const parts = []; if (row.cuts) { row.cuts.forEach(c => { if (c.l && c.count) { parts.push({ length: parseFloat(c.l), count: parseInt(c.count), marking: c.marking || '', totalQty: parseInt(c.count) * parseInt(row.qty) }); } }); } const usedLenInOneBar = parts.reduce((sum, p) => sum + (p.length * p.count), 0); const remainder = parseFloat(row.l) - usedLenInOneBar; groups[specKey].push({ stockLength: parseFloat(row.l), qty: parseInt(row.qty), parts: parts, remainder: remainder }); }); const computedResults = {}; Object.keys(groups).forEach(specKey => { const plan = groups[specKey]; let totalBars = 0; let totalLoss = 0; let totalStockLen = 0; plan.forEach(p => { totalBars += Number(p.qty); totalLoss += (Number(p.remainder) * Number(p.qty)); totalStockLen += (Number(p.stockLength) * Number(p.qty)); }); const lossRate = totalStockLen ? ((totalLoss / totalStockLen) * 100).toFixed(2) : 0; computedResults[specKey] = { plan: plan, summary: { totalBars, totalLoss, lossRate } }; }); setResultsByDong(prev => ({ ...prev, [currentDong]: { ...prev[currentDong], 'manual_result': computedResults } })); setViewMode('result'); };
+
+            // ... (fillWorksheet and handleExcelExport logic UNTOUCHED) ...
             const fillWorksheet = async (worksheet, targetDong, mode) => { const allResults = resultsByDong[targetDong]; const results = allResults[mode]; const specKeys = Object.keys(results).sort(); worksheet.columns = [{ width: 7 }, { width: 7 }, { width: 7 }, { width: 7 }, { width: 12 }, { width: 8 }, { width: 12 }, { width: 8 }, { width: 8 }, { width: 22 }, { width: 12 }, { width: 14 }, { width: 12 }, { width: 5 }, { width: 5 }, { width: 5 }, { width: 20 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 18 }]; const fontNormal = { name: "Malgun Gothic", size: 11, color: { argb: "FF000000" } }; const fontBold = { name: "Malgun Gothic", size: 11, bold: true, color: { argb: "FF000000" } }; const fontTitle = { name: "Malgun Gothic", size: 15, bold: true, color: { argb: "FF000000" } }; const fontRedBold = { name: "Malgun Gothic", size: 11, bold: true, color: { argb: "FFFF0000" } }; const fillHeader = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCEEFF' } }; const fillTotal = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCEEFF' } }; const fillRed = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCCBC' } }; const fillYellow = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } }; const fillLightGray = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEEEEE' } }; const fillWhite = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }; const borderAll = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }; const alignCenter = { vertical: 'middle', horizontal: 'center' }; const palette = ["FFFFFFFF", "FFFFF2CC", "FFFCE4EC", "FFE2F0D9", "FFE1F5FE", "FFF3E5F5"]; const specColorMap = {}; specKeys.forEach((key, idx) => { specColorMap[key] = (specKeys.length > 1) ? palette[idx % palette.length] : "FFFFFFFF"; }); let currentRow = 1; const titleRow = worksheet.getRow(currentRow); let titleText = `※ ${projectInfo.company || '업체명'}(${projectInfo.site || '현장명'})`; if (!isNoDongMode) titleText += ` - ${targetDong}`; titleRow.getCell(1).value = titleText; titleRow.getCell(1).font = fontTitle; worksheet.mergeCells(`A${currentRow}:M${currentRow}`); currentRow += 2; const noteParts = []; if (projectInfo.isIronBanding) noteParts.push("철밴딩 동표기"); if (projectInfo.isUnder1Ton) noteParts.push("1톤 미만 밴딩"); if (projectInfo.note) noteParts.push(projectInfo.note); if (noteParts.length > 0) { const noteRow = worksheet.getRow(currentRow); noteRow.getCell(1).value = noteParts.join(', '); noteRow.getCell(1).font = projectInfo.isIronBanding ? fontBold : fontNormal; noteRow.getCell(1).alignment = alignCenter; if (projectInfo.isIronBanding) noteRow.getCell(1).fill = fillYellow; noteRow.getCell(1).border = borderAll; worksheet.mergeCells(`A${currentRow}:M${currentRow}`); } currentRow += 2; const headers = ['순번', '두께', '장변', '단변', '길이(원본)', '수량', '길이(컷팅)', '컷팅수', '수량', '마킹', '본당 LOSS', '총 LOSS', '비고']; const headerRow = worksheet.getRow(currentRow); headers.forEach((h, i) => { const cell = headerRow.getCell(i + 1); cell.value = h; cell.style = { font: fontBold, fill: fillHeader, alignment: alignCenter, border: borderAll }; cell.border = { ...borderAll, bottom: { style: 'medium' } }; }); currentRow++; let seq = 1; const stockSummary = {}; const cutPartMap = new Map(); const statsMap = {}; let grandTotalStockQty = 0; let grandTotalCutQty = 0; let grandTotalLoss = 0; specKeys.forEach(specKey => { const { plan } = results[specKey]; let w = "?", h = "?", t = "?"; try { const dims = specKey.split(' ')[0] || ""; const thick = specKey.split(' ')[1] || ""; if (dims.includes('*')) [w, h] = dims.split('*'); else if (dims.includes('x')) [w, h] = dims.split('x'); t = thick.replace('T', ''); } catch (e) { } const unitWeight = getUnitWeight(w, h, t); const statKey = `${t}|${w}|${h}`; if (!statsMap[statKey]) { statsMap[statKey] = { t, w, h, inputLen: 0, inputWt: 0, prodLen: 0, prodWt: 0 }; } let sortedPlan = [...plan]; sortedPlan.sort((a, b) => b.stockLength - a.stockLength); sortedPlan.forEach(group => { grandTotalStockQty += Number(group.qty || 0); grandTotalLoss += (Number(group.remainder || 0) * Number(group.qty || 0)); const summaryKey = `${t}|${w}|${h}|${group.stockLength}`; if (!stockSummary[summaryKey]) stockSummary[summaryKey] = 0; stockSummary[summaryKey] += Number(group.qty || 0); const inL = Number(group.stockLength || 0) * Number(group.qty || 0); statsMap[statKey].inputLen += inL; statsMap[statKey].inputWt += (inL / 1000 * unitWeight); const groupStartRow = currentRow; const rowHeight = Math.max(1, (group.parts || []).length); const groupColor = { type: 'pattern', pattern: 'solid', fgColor: { argb: specColorMap[specKey] } }; (group.parts || []).forEach((part, pIdx) => { grandTotalCutQty += Number(part.totalQty || 0); const outL = Number(part.length || 0) * Number(part.totalQty || 0); statsMap[statKey].prodLen += outL; statsMap[statKey].prodWt += (outL / 1000 * unitWeight); const partKey = `${t}|${w}|${h}|${part.length}|${part.marking}`; if (cutPartMap.has(partKey)) { cutPartMap.get(partKey).qty += Number(part.totalQty || 0); } else { cutPartMap.set(partKey, { t, w, h, length: part.length, qty: Number(part.totalQty || 0), marking: part.marking, specKey }); } const row = worksheet.getRow(currentRow); if (pIdx === 0) { row.getCell(1).value = seq++; row.getCell(2).value = t; row.getCell(3).value = w; row.getCell(4).value = h; row.getCell(5).value = Number(group.stockLength); row.getCell(6).value = Math.floor(group.qty); } row.getCell(7).value = Number(part.length); row.getCell(8).value = (part.totalQty / group.qty); row.getCell(9).value = Math.floor(part.totalQty); row.getCell(10).value = part.marking; if (pIdx === 0) { row.getCell(11).value = Number(group.remainder); row.getCell(12).value = Number(group.remainder) * Number(group.qty); } for (let c = 1; c <= 13; c++) { const cell = row.getCell(c); cell.border = borderAll; cell.alignment = alignCenter; cell.font = fontNormal; if (c <= 5) { cell.fill = groupColor; } else if (c === 6 || c === 9) { cell.fill = fillLightGray; } else { cell.fill = fillWhite; } if ([5, 6, 9, 11, 12].includes(c)) cell.numFmt = '#,##0'; } row.getCell(5).font = fontBold; row.getCell(7).font = fontBold; row.getCell(9).font = fontBold; if (pIdx === 0 && Number(group.remainder) >= 650) { const lossCell = row.getCell(11); lossCell.fill = fillRed; lossCell.font = fontRedBold; } currentRow++; }); if (rowHeight > 1) { const endRow = groupStartRow + rowHeight - 1; [1, 2, 3, 4, 5, 6, 11, 12, 13].forEach(c => worksheet.mergeCells(groupStartRow, c, endRow, c)); } const lastRowOfGroup = worksheet.getRow(currentRow - 1); for (let c = 1; c <= 13; c++) lastRowOfGroup.getCell(c).border = { ...borderAll, bottom: { style: 'medium' } }; }); }); const totalRow = worksheet.getRow(currentRow); totalRow.getCell(1).value = '합 계'; worksheet.mergeCells(currentRow, 1, currentRow, 5); totalRow.getCell(6).value = Math.floor(grandTotalStockQty); totalRow.getCell(7).value = '합 계'; worksheet.mergeCells(currentRow, 7, currentRow, 8); totalRow.getCell(9).value = Math.floor(grandTotalCutQty); totalRow.getCell(12).value = grandTotalLoss; for (let c = 1; c <= 13; c++) { const cell = totalRow.getCell(c); cell.fill = fillTotal; cell.font = fontBold; cell.border = borderAll; cell.alignment = alignCenter; if ([6, 9, 12].includes(c)) cell.numFmt = '#,##0'; } const mainTableEndRow = currentRow; currentRow += 4; const statsStartRow = 5; const statsColStart = 17; const statsTitleRow = worksheet.getRow(statsStartRow); statsTitleRow.getCell(statsColStart).value = '중량 및 길이 집계표'; worksheet.mergeCells(statsStartRow, statsColStart, statsStartRow, statsColStart + 5); statsTitleRow.getCell(statsColStart).style = { font: fontBold, fill: fillHeader, alignment: alignCenter, border: borderAll }; const statsHeaderRow = worksheet.getRow(statsStartRow + 1); ['규격', '투입 길이(m)', '생산 길이(m)', '투입 중량(kg)', '생산 중량(kg)', 'LOSS 중량(kg)'].forEach((h, i) => { const cell = statsHeaderRow.getCell(statsColStart + i); cell.value = h; cell.style = { font: fontBold, fill: fillHeader, alignment: alignCenter, border: borderAll }; }); let grandInLen = 0, grandProdLen = 0, grandInWt = 0, grandProdWt = 0; let statsRowIdx = statsStartRow + 2; const sortedStatKeys = Object.keys(statsMap).sort((a, b) => { const [t1, w1, h1] = a.split('|').map(Number); const [t2, w2, h2] = b.split('|').map(Number); if (w1 !== w2) return w2 - w1; if (h1 !== h2) return h2 - h1; return t1 - t2; }); sortedStatKeys.forEach(k => { const d = statsMap[k]; grandInLen += (d.inputLen || 0); grandProdLen += (d.prodLen || 0); grandInWt += (d.inputWt || 0); grandProdWt += (d.prodWt || 0); const lossWt = (d.inputWt || 0) - (d.prodWt || 0); const r = worksheet.getRow(statsRowIdx); r.getCell(statsColStart).value = `${d.w}*${d.h}*${d.t}T`; r.getCell(statsColStart + 1).value = (d.inputLen / 1000); r.getCell(statsColStart + 2).value = (d.prodLen / 1000); r.getCell(statsColStart + 3).value = d.inputWt; r.getCell(statsColStart + 4).value = d.prodWt; r.getCell(statsColStart + 5).value = lossWt; for (let c = 0; c < 6; c++) { const cell = r.getCell(statsColStart + c); cell.border = borderAll; cell.alignment = alignCenter; cell.font = fontNormal; if (c > 0) cell.numFmt = '#,##0.000'; } statsRowIdx++; }); const statsTotalRow = worksheet.getRow(statsRowIdx); statsTotalRow.getCell(statsColStart).value = '전체 합계'; statsTotalRow.getCell(statsColStart + 1).value = (grandInLen / 1000); statsTotalRow.getCell(statsColStart + 2).value = (grandProdLen / 1000); statsTotalRow.getCell(statsColStart + 3).value = grandInWt; statsTotalRow.getCell(statsColStart + 4).value = grandProdWt; statsTotalRow.getCell(statsColStart + 5).value = (grandInWt - grandProdWt); for (let c = 0; c < 6; c++) { const cell = statsTotalRow.getCell(statsColStart + c); cell.style = { font: fontBold, fill: fillTotal, border: borderAll, alignment: alignCenter }; if (c > 0) cell.numFmt = '#,##0.000'; } const rawStartRow = currentRow; let rawRowIdx = rawStartRow + 2; let rawTotalQtyCalc = 0; worksheet.mergeCells(rawStartRow, 1, rawStartRow, 5); worksheet.getRow(rawStartRow).getCell(1).value = '원본'; worksheet.getRow(rawStartRow).getCell(1).style = { font: fontBold, fill: fillHeader, alignment: alignCenter, border: borderAll }; const rawHeaderRow = worksheet.getRow(rawStartRow + 1); ['두께', '장변', '단변', '길이', '수량'].forEach((h, i) => { const cell = rawHeaderRow.getCell(i + 1); cell.value = h; cell.style = { font: fontBold, fill: fillHeader, alignment: alignCenter, border: borderAll }; }); const sortedStockKeys = Object.keys(stockSummary).sort((a, b) => { const [t1, w1, h1, l1] = a.split('|').map(Number); const [t2, w2, h2, l2] = b.split('|').map(Number); if (w1 !== w2) return w2 - w1; if (h1 !== h2) return h2 - h1; if (t1 !== t2) return t2 - t1; return l2 - l1; }); sortedStockKeys.forEach(key => { const [t, w, h, l] = key.split('|'); const qty = stockSummary[key]; rawTotalQtyCalc += qty; const r = worksheet.getRow(rawRowIdx); r.getCell(1).value = t; r.getCell(2).value = w; r.getCell(3).value = h; r.getCell(4).value = Number(l); r.getCell(5).value = qty; const rowSpecKey = `${[parseInt(w), parseInt(h)].sort((a, b) => b - a).join('*')} ${t}T`; const cellFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: specColorMap[rowSpecKey] || "FFFFFFFF" } }; for (let c = 1; c <= 5; c++) { const cell = r.getCell(c); cell.border = borderAll; cell.alignment = alignCenter; cell.font = fontNormal; cell.fill = cellFill; } rawRowIdx++; }); const rawTotalRow = worksheet.getRow(rawRowIdx); rawTotalRow.getCell(1).value = '합계'; worksheet.mergeCells(rawRowIdx, 1, rawRowIdx, 4); rawTotalRow.getCell(5).value = rawTotalQtyCalc; [1, 2, 3, 4, 5].forEach(c => { const cell = rawTotalRow.getCell(c); cell.style = { font: fontBold, fill: fillTotal, border: borderAll, alignment: alignCenter }; }); const prodStartRow = rawStartRow; let prodRowIdx = prodStartRow + 2; let prodTotalQtyCalc = 0; worksheet.mergeCells(prodStartRow, 7, prodStartRow, 12); worksheet.getRow(prodStartRow).getCell(7).value = '생산제품'; worksheet.getRow(prodStartRow).getCell(7).style = { font: fontBold, fill: fillHeader, alignment: alignCenter, border: borderAll }; const prodHeaderRow = worksheet.getRow(prodStartRow + 1); ['두께', '장변', '단변', '길이', '수량', '마킹'].forEach((h, i) => { const cell = prodHeaderRow.getCell(7 + i); cell.value = h; cell.style = { font: fontBold, fill: fillHeader, alignment: alignCenter, border: borderAll }; }); const sortedParts = Array.from(cutPartMap.values()).sort((a, b) => { if (a.w !== b.w) return b.w - a.w; if (a.h !== b.h) return b.h - a.h; if (a.t !== b.t) return b.t - a.t; if (b.length !== a.length) return b.length - a.length; return String(a.marking).localeCompare(String(b.marking)); }); sortedParts.forEach(p => { prodTotalQtyCalc += p.qty; const r = worksheet.getRow(prodRowIdx); r.getCell(7).value = p.t; r.getCell(8).value = p.w; r.getCell(9).value = p.h; r.getCell(10).value = p.length; r.getCell(11).value = p.qty; r.getCell(12).value = p.marking; const cellFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: specColorMap[p.specKey] || "FFFFFFFF" } }; for (let c = 7; c <= 12; c++) { const cell = r.getCell(c); cell.border = borderAll; cell.alignment = alignCenter; cell.font = fontNormal; cell.fill = cellFill; } prodRowIdx++; }); const prodTotalRow = worksheet.getRow(prodRowIdx); prodTotalRow.getCell(7).value = '합계'; worksheet.mergeCells(prodRowIdx, 7, prodRowIdx, 10); prodTotalRow.getCell(11).value = prodTotalQtyCalc; [7, 8, 9, 10, 11, 12].forEach(c => { const cell = prodTotalRow.getCell(c); cell.style = { font: fontBold, fill: fillTotal, border: borderAll, alignment: alignCenter }; }); const maxPrintRow = Math.max(mainTableEndRow, rawRowIdx, prodRowIdx); worksheet.pageSetup = { orientation: 'portrait', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.25, right: 0.25, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 }, printArea: `A1:M${maxPrintRow}` }; };
-            const handleExcelExport = async (targetType, options) => { try { const targets = targetType === 'current' ? [currentDong] : dongs; let hasSheets = false; const masterWorkbook = new ExcelJS.Workbook(); for (const dName of targets) { const res = resultsByDong[dName]; let modesToExport = []; if(targetType === 'current') { if(options.mode === 'both') modesToExport = ['min_rows', 'min_loss']; else modesToExport = [options.mode]; } else { modesToExport = [options.modeMap[dName]]; } modesToExport.forEach(async (mode) => { if(res && res[mode]) { const suffix = mode === 'min_rows' ? '작업' : (mode === 'min_loss' ? 'LOSS' : '수동'); const sheet = masterWorkbook.addWorksheet(`${dName}_${suffix}`); await fillWorksheet(sheet, dName, mode); hasSheets = true; }}); } setTimeout(async () => { if (hasSheets) { const buffer = await masterWorkbook.xlsx.writeBuffer(); let fileName = `${projectInfo.company || '업체명'}(${projectInfo.site || '현장명'})`; if (!isNoDongMode) fileName += `-${currentDong}`; fileName += '.xlsx'; const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }); saveAs(blob, fileName); setIsExcelModalOpen(false); alert("다운로드가 완료되었습니다."); } else { alert("저장할 데이터가 없습니다."); } }, 500); } catch (error) { console.error(error); alert("엑셀 저장 중 오류가 발생했습니다: " + error.message); } };
+            const handleExcelExport = async (targetType, modeType) => { try { const targets = targetType === 'current' ? [currentDong] : dongs; let hasSheets = false; const masterWorkbook = new ExcelJS.Workbook(); for (const dName of targets) { const res = resultsByDong[dName]; if (res) { if (modeType === 'both') { if (res['min_rows']) { const sheet = masterWorkbook.addWorksheet(`${dName}_작업`); await fillWorksheet(sheet, dName, 'min_rows'); hasSheets = true; } if (res['min_loss']) { const sheet = masterWorkbook.addWorksheet(`${dName}_LOSS`); await fillWorksheet(sheet, dName, 'min_loss'); hasSheets = true; } } else { if (res[modeType]) { const sheetName = `${dName}_${modeType === 'min_rows' ? '작업' : (modeType === 'min_loss' ? 'LOSS' : '수동')}`; const sheet = masterWorkbook.addWorksheet(sheetName); await fillWorksheet(sheet, dName, modeType); hasSheets = true; } } } } if (hasSheets) { const buffer = await masterWorkbook.xlsx.writeBuffer(); let fileName = `${projectInfo.company || '업체명'}(${projectInfo.site || '현장명'})`; if (!isNoDongMode) fileName += `-${currentDong}`; fileName += '.xlsx'; const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }); saveAs(blob, fileName); setIsExcelModalOpen(false); alert("다운로드가 완료되었습니다.\n[ExcelJS] 인쇄 설정이 적용되었습니다."); } else { alert("저장할 데이터가 없거나 선택하신 모드에 대한 계산 결과가 없습니다."); } } catch (error) { console.error(error); alert("엑셀 저장 중 오류가 발생했습니다: " + error.message); } };
 
             return (
                 <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex">
                     <Sidebar viewMode={viewMode} setViewMode={setViewMode} projectInfo={projectInfo} setProjectInfo={setProjectInfo} isNoDongMode={isNoDongMode} setIsNoDongMode={setIsNoDongMode} />
                     <div className="flex-1 ml-64 p-8 print:m-0 print:p-0">
-                        {viewMode === 'input' && (<InputView currentDong={currentDong} dongs={dongs} setCurrentDong={setCurrentDong} addDong={addDong} deleteDong={deleteDong} renameDong={renameDong} data={getCurrentData()} updateCurrentData={updateCurrentData} activeTab={activeTab} setActiveTab={setActiveTab} customStocks={customStocks} setCustomStocks={setCustomStocks} processGridData={processGridData} handlePaste={handlePaste} runAllDongs={runAllDongs} globalSettings={STANDARD_STOCKS} isUserStockMode={isUserStockMode} setIsUserStockMode={setIsUserStockMode} userStockList={userStockList} setUserStockList={setUserStockList} setViewMode={setViewMode} isCalculating={isCalculating} isNoDongMode={isNoDongMode} handleFetchStock={handleFetchStock} isGapiReady={isGapiReady} isLoggedIn={isLoggedIn} handleLogin={handleLogin} inputMode={inputMode} setInputMode={setInputMode} />)}
-                        {viewMode === 'result' && (<ResultView currentDong={currentDong} dongs={dongs} setCurrentDong={setCurrentDong} addDong={addDong} deleteDong={deleteDong} renameDong={renameDong} resultsByDong={resultsByDong} runAllDongs={runAllDongs} openExcelModal={() => setIsExcelModalOpen(true)} openStockModal={() => setIsStockModalOpen(true)} setViewMode={setViewMode} setManualData={setManualData} projectInfo={projectInfo} isNoDongMode={isNoDongMode} openCopyModal={() => setIsCopyModalOpen(true)} />)}
-                        {viewMode === 'manual' && (<ManualCPView dongs={dongs} currentDong={currentDong} setCurrentDong={setCurrentDong} addDong={addDong} deleteDong={deleteDong} renameDong={renameDong} projectInfo={projectInfo} manualData={manualData} setManualData={setManualData} onConvert={handleManualToResult} parsedItems={getCurrentData().parsedItems.length > 0 ? getCurrentData().parsedItems : parseItemsFromGrid(getCurrentData().gridData, getCurrentData().colMapping, getCurrentData().spec, getCurrentData().thickness)} isNoDongMode={isNoDongMode} openCopyModal={() => setIsCopyModalOpen(true)} />)}
+                        {viewMode === 'input' && (<InputView currentDong={currentDong} dongs={dongs} setCurrentDong={setCurrentDong} addDong={addDong} deleteDong={deleteDong} renameDong={renameDong} data={getCurrentData()} updateCurrentData={updateCurrentData} activeTab={activeTab} setActiveTab={setActiveTab} customStocks={customStocks} setCustomStocks={setCustomStocks} processGridData={processGridData} handlePaste={handlePaste} runAllDongs={runAllDongs} globalSettings={STANDARD_STOCKS} isUserStockMode={isUserStockMode} setIsUserStockMode={setIsUserStockMode} userStockList={userStockList} setUserStockList={setUserStockList} setViewMode={setViewMode} isCalculating={isCalculating} isNoDongMode={isNoDongMode} handleFetchStock={handleFetchStock} isGapiReady={isGapiReady} isLoggedIn={isLoggedIn} handleLogin={handleLogin} />)}
+                        {viewMode === 'result' && (<ResultView currentDong={currentDong} dongs={dongs} setCurrentDong={setCurrentDong} addDong={addDong} deleteDong={deleteDong} renameDong={renameDong} resultsByDong={resultsByDong} runAllDongs={runAllDongs} openExcelModal={() => setIsExcelModalOpen(true)} openStockModal={() => setIsStockModalOpen(true)} setViewMode={setViewMode} setManualData={setManualData} projectInfo={projectInfo} isNoDongMode={isNoDongMode} />)}
+                        {viewMode === 'manual' && (<ManualCPView dongs={dongs} currentDong={currentDong} setCurrentDong={setCurrentDong} addDong={addDong} deleteDong={deleteDong} renameDong={renameDong} projectInfo={projectInfo} manualData={manualData} setManualData={setManualData} onConvert={handleManualToResult} parsedItems={getCurrentData().parsedItems.length > 0 ? getCurrentData().parsedItems : parseItemsFromGrid(getCurrentData().gridData, getCurrentData().colMapping, getCurrentData().spec, getCurrentData().thickness)} isNoDongMode={isNoDongMode} />)}
                     </div>
-                    <CopyResultModal isOpen={isCopyModalOpen} onClose={() => setIsCopyModalOpen(false)} dongs={dongs} onConfirm={handleCopySelected} />
                     <ExcelExportModal isOpen={isExcelModalOpen} onClose={() => setIsExcelModalOpen(false)} onConfirm={handleExcelExport} dongs={dongs} />
                     <StockDeductModal isOpen={isStockModalOpen} onClose={() => setIsStockModalOpen(false)} onConfirm={handleUpdateStock} dongs={dongs} isLoggedIn={isLoggedIn} handleLogin={handleLogin} />
                 </div>
@@ -849,4 +1049,5 @@
         const root = ReactDOM.createRoot(document.getElementById('root')); root.render(<App />);
     </script>
 </body>
+
 </html>
