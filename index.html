@@ -536,19 +536,25 @@
             const [isGapiReady, setIsGapiReady] = useState(false);
             const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-            useEffect(() => {
+useEffect(() => {
                 const initGapi = () => { 
                     gapi.load('client', async () => { 
                         await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] }); 
                         setIsGapiReady(true);
-                        const stored = localStorage.getItem('gapi_token_read');
-                        if (stored) {
-                            try {
+                        
+                        // [수정됨] 로컬 스토리지 읽기 에러 방지 (보안/쿠키 차단 대응)
+                        try {
+                            const stored = localStorage.getItem('gapi_token_read');
+                            if (stored) {
                                 const { token, expiry } = JSON.parse(stored);
                                 if (Date.now() < expiry) {
                                     gapi.client.setToken(token); setIsLoggedIn(true);
-                                } else { localStorage.removeItem('gapi_token_read'); }
-                            } catch (e) {}
+                                } else { 
+                                    localStorage.removeItem('gapi_token_read'); 
+                                }
+                            }
+                        } catch (e) {
+                            console.warn("로컬 스토리지 접근이 제한되어 자동 로그인을 생략합니다.", e);
                         }
                     }); 
                 };
@@ -558,7 +564,13 @@
                         callback: (tokenResponse) => { 
                             if (tokenResponse && tokenResponse.access_token) { 
                                 const expiryTime = Date.now() + (tokenResponse.expires_in * 1000);
-                                localStorage.setItem('gapi_token_read', JSON.stringify({ token: tokenResponse, expiry: expiryTime }));
+                                
+                                // [수정됨] 로컬 스토리지 쓰기 에러 방지
+                                try {
+                                    localStorage.setItem('gapi_token_read', JSON.stringify({ token: tokenResponse, expiry: expiryTime }));
+                                } catch (e) {
+                                    console.warn("로컬 스토리지 접근이 제한되어 로그인 정보가 저장되지 않습니다.", e);
+                                }
                                 setIsLoggedIn(true); 
                             } 
                         } 
